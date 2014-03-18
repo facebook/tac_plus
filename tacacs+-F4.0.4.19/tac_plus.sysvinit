@@ -1,0 +1,60 @@
+#!/bin/bash
+#
+# /etc/rc.d/init.d/tac_plus
+#
+# chkconfig: 2345 86 14
+# description: TACACS+ Daemon
+
+# Define variables
+TACPLUS_PID=/var/run/tac_plus.pid
+TACPLUS_BIN=/usr/bin/tac_plus
+TACPLUS_OPTS=""
+TACPLUS_CONF=/etc/tac_plus.conf
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+RETVAL=0
+prog="tac_plus"
+
+case "$1" in
+  start)
+        # The process must be configured first.
+        [ -f /etc/tac_plus.conf ] || exit 6
+
+        echo -n $"Starting $prog: "
+        daemon /usr/bin/tac_plus -C $TACPLUS_CONF $TACPLUS_OPTS
+        RETVAL=$?
+        [ $RETVAL -eq 0 ] && touch /var/lock/subsys/tac_plus
+        echo
+        ;;
+  stop)
+        echo -n $"Shutting down $prog: "
+        killproc tac_plus
+        RETVAL=$?
+        [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/tac_plus
+        echo
+        ;;
+  restart|reload)
+        $0 stop
+        $0 start
+        RETVAL=$?
+        ;;
+  condrestart)
+        if [ -f /var/lock/subsys/tac_plus ]; then
+                $0 stop
+                $0 start
+        fi
+        RETVAL=$?
+        ;;
+  status)
+        status tac_plus
+        RETVAL=$?
+        ;;
+  *)
+        echo $"Usage: $0 {start|stop|restart|reload|condrestart|status}"
+        exit 2
+esac
+
+exit $RETVAL
+

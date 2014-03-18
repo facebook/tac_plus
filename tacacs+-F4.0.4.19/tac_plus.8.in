@@ -1,0 +1,296 @@
+.\"
+.hys 50
+.TH tac_plus 8 "27 July 2009"
+.\"
+.SH NAME
+tac_plus \- tacacs plus daemon
+.\"
+.SH SYNOPSIS
+.B tac_plus
+.BI \-C 
+<configfile>
+[\fB\-GghiLPSstv\fP]
+[\c
+.BI \-B
+<bind_address>]
+[\c
+.BI \-d
+<level>]
+[\c
+.BI \-l
+<logfile>]
+[\c
+.BI \-p
+<tcp_port>]
+[\c
+.BI \-u
+<wtmpfile>]
+[\c
+.BI \-w
+<wholog>]
+.\"
+.SH DESCRIPTION
+By default, tac_plus listens on tcp port
+.B 49 
+and provides network devices (normally routers and access servers) with
+authentication, authorization and accounting services.
+.PP
+A configuration file controls the details of authentication,
+authorization and accounting.
+.PP
+.\"
+.SH COMMAND-LINE OPTIONS
+.TP
+.B \-C <configfile>
+.IP
+Specify the configuration file name.  The -C option is
+.B required.
+.\"
+.TP
+.B \-B <bind address>
+.IP
+Specify the address on which the daemon should
+.BR bind(2).
+Successive instances of
+.B \-B
+override previous instances.  By default, the daemon listens on all
+addresses.
+Note: this changes the name of the pid file created by the daemon.
+.\"
+.TP
+.B \-G
+Remain in the foreground, but not single-threaded nor logging to the tty.
+.\"
+.TP
+.B \-d <level>
+Switch on debugging.  By default the output will appear in the log file and
+.BR syslog (3).
+.sp
+NOTE: The 
+.B \-g 
+flag will cause these messages to also appear on stdout.  The
+.B \-t 
+flag will cause these messages to also be written to /dev/console.
+.sp
+The value of level is as described below.  These values represent bits
+that can be logically OR'd together.  The daemon logically ORs successive
+occurrences of the
+.B -d
+option.
+.sp
+.nf
+Value   Meaning
+8       authorization debugging
+16      authentication debugging
+32      password file processing debugging
+64      accounting debugging
+128     config file parsing & lookup
+256     packet transmission/reception
+512     encryption/decryption
+1024    MD5 hash algorithm debugging
+2048    very low level encryption/decryption
+.fi
+.\"
+.TP
+.B \-g
+Single threaded mode.  The daemon will only accept and service a single
+connection at a time without forking and without closing file
+descriptors.  All log messages appear on standard output.
+.sp
+This is intended only for debugging and not for normal service.
+.sp
+This option does not work with single-connection sessions.
+.\"
+.TP
+.B \-h
+Display help message.
+.\"
+.TP
+.B \-i
+.B tac_plus
+will be run from inetd(8).  In inetd mode, the configuration file is
+parsed every time
+.B tac_plus
+starts.
+.sp
+If the configuration is large or the frequency of connections is
+high, this negatively will affect the responsiveness of the daemon.
+.sp
+If the config file is small, connections are infrequent, and authentication
+is being done via passwd(5) files or SKEY (which are not cached), running
+in inetd mode should be tolerable, but still is not recommended.
+.sp
+This option does not work with single-connection sessions.
+.\"
+.TP
+.B -l <logfile>
+Specify an alternate log file location.
+This file is only used when the
+.B \-d
+option is used.
+The logs are still posted to syslog.
+.\"
+.TP
+.B -L
+Lookup DNS PTR (Domain Name System PoinTeR) record of client addresses.
+The resulting FQDN (Fully Qualified Domain Name), if it resolves, will be
+used in log messages, libwrap (tcp_wrappers) checks, and for matching host
+clauses of the configuration file.  Also see
+.BR tac_plus.conf (5).
+.\"
+.TP 
+.B \-P
+Parse the configuration file, echo it to standard output while
+parsing, and then exit.
+.B tac_plus
+will exit non-zero when a parser error occurs.
+.sp
+Useful for debugging configuration file syntax.
+.\"
+.TP
+.B \-p <port>
+Listen on the specified port number instead of the default port
+.B 49 
+for incoming tcp connections.  Note: this changes the name of the
+pid file created by the daemon.
+.\"
+.TP
+.B \-S
+Enables or allows client single-connection mode, where-by the client will
+create one connection and interleave queries.
+.sp
+Note: this is broken in IOS and IOS-XE.
+.sp
+Note: this is currently only partially supported in the daemon.
+.\"
+.TP
+.B \-s
+Causes the daemon to always reject authentication requests which contain
+a minor version number of zero (SENDPASS).  This enhances security in the
+event that someone discovers your encryption key.  SENDPASS requests
+permit requesters to obtain CHAP, PAP and ARAP passwords from the daemon,
+iff the encryption key is known.
+.sp
+Note: IOS versions preceding 11.2 will fail.
+.\"
+.TP
+.B \-t
+Log all informational, debugging or error messages to
+.B
+/dev/console 
+in addition to logging to syslogd. Useful for debugging.
+.\"
+.TP
+.B \-u <wtmpfile>
+Write wtmp entries to the specified wtmp file.
+.\"
+.TP
+.B \-v
+Display version information and exit.
+.\"
+.TP
+.B \-w <wholog>
+Specify the location of the max session file.
+.\"
+.SH STARTING
+.B tac_plus
+is normally invoked by root, as follows:
+.sp
+
+    # tac_plus -C <configfile>
+
+.sp
+where <configfile> is a full path to the configuration file.  Tac_plus
+will background itself and start listening on port 49 for incoming tcp
+connections.
+.sp
+Tac_plus must be invoked as root to obtain privileged network socket
+49 and to read the protected configuration file, which may contain
+confidential information such as encryption keys and cleartext
+passwords.
+.sp
+After the port is acquired and the config file is read, root
+privileges are no longer required.  You can arrange that tac_plus will
+change its user and group IDs to a more innocuous user and group via the
+configuration file.
+.sp
+NOTE: The new user and group still needs permission to read any
+passwd(5) (and shadow(5)) files and S/KEY database if these are being used.
+.\"
+.SH "TCP WRAPPERS"
+If
+.B tac_plus
+was compiled with libwrap (aka. tcp_wrappers) support, upon connection
+the daemon will consult with tcp_wrappers on whether the client has
+permission to connect.  The daemon name used in a daemon list of the
+access control file is the name of the executable, normally "tac_plus".
+See
+.BR hosts_access (5).
+.\"
+.SH PERMISSIONS
+The configuration file should be unreadable and unwriteable by anyone except
+root, as it contains passwords and keys.
+.\"
+.SH SIGNALS
+If the daemon is receives a SIGHUP or SIGUSR1, it will reinitialize itself
+and re-read its configuration file.
+.sp
+Note: if an error is encountered in the configuration file, the daemon
+will die.
+.\"
+.SH "LOG MESSAGES"
+.B tac_plus
+logs error and informational messages to syslog facility LOG_DAEMON.
+.\"
+.SH FILES
+.TP 30
+.B @TACPLUS_ACCTFILE@
+Default accounting file.
+.\"
+.TP
+.B @TACPLUS_LOGFILE@
+Default log file used when the
+.B \-d
+option is used.
+.\"
+.TP
+.B @TACPLUS_PIDFILE@
+Pid file.
+If the
+.B \-B
+option is used, ".bind_address" is appended.
+If the
+.B \-p
+option is used, ".port_number" is appended.
+.\"
+.SH "SEE ALSO"
+.BR tac_plus.conf (5),
+.BR tac_pwd (8)
+.PP
+Also see the  
+.B tac_plus
+User Guide (user_guide) that came with the distribution.
+The user guide does not cover all the modifications to the original 
+Cisco version.
+.\"
+.SH HISTORY
+There are at least 3 versions of the authentication protocol that people
+commonly refer to as "TACACS".
+.sp
+The first is ordinary tacacs, which was the first one offered on Cisco
+boxes and has been in use for many years.  The second is an extension
+to the first, commonly called Extended Tacacs or XTACACS, introduced
+in 1990.
+.sp
+The third one is TACACS+ (or T+ or tac_plus) which is what is documented
+here.  TACACS+ is NOT COMPATIBLE with any previous versions of tacacs.
+.\"
+.SH AUTHOR
+The tac_plus (tacacs+) developer's kit is a product of Cisco Systems,
+written by Lol Grant.  Made available at no cost and with no warranty
+of any kind.  See the file COPYING and source files that came with the
+distribution for specifics.
+.sp
+Though heavily modified from the original Cisco manual pages, much of
+the modifications are derived from the tacacs IETF draft and the
+Cisco user guide.

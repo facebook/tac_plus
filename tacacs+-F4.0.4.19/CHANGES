@@ -1,0 +1,396 @@
+>Changes from Release 0.0 to release 0.1
+---------------------------------------
+
+You must now say "default attribute = permit" instead of
+default authorization = permit" when configuring service
+defaults
+
+You must now say "default svc = permit" instead of "default
+authorization = permit" when configuring service defaults for a user.
+
+When authorizing enable requests, the daemon used to prompt for a
+username which it then ignored. It no longer prompts for a username.
+
+Fix recursion issues with service and command lookups. They are now
+fully recursive c.f. password lookups.
+
+Add debugging output to password verification to provide information
+about expiry processing.
+
+Keep track of longest hash chain we create, for fine tuning. Hash all
+keywords into a keyword table instead of doing linear lookup.
+
+Update users_guide to reflect the new configuration syntax.
+
+The convert.pl script now generates the new configuration file syntax.
+
+Accounting code now honours the "more" flag.
+
+
+Changes from Release 0.1 to release 0.2
+---------------------------------------
+
+You can now send a SIGHUP to the daemon to cause it to reinitialize
+itself and re-read its CONFIG file. There is a new debugging flag
+devoted to this section of the code.
+
+Node types are now pretty-printed in debug output.
+
+The conversion script "convert.pl" now will not print out an expires
+field if it doesn't think the syntax of the field is correct. It also
+now ignores blank lines in its input files.
+
+When doing authorization, the NAS supplied attribute "cmd=" is now
+correctly ignored. This would previously have caused exec
+authorization to be denied.
+
+Changes from Release 0.2 to release 0.3
+---------------------------------------
+Warn when not invoked as uid 0.
+Improved Usage message
+Add make install target
+
+Changes from Release 0.3 to release 0.4
+---------------------------------------
+Add TAC_PLUS_PIDFILE to makefile per Andy Linton's suggestion.
+Fix bug in authorization code (protocol field needs to be
+uppercase) which prevented authorization from working.
+
+Changes from Release 0.4 to release 0.5
+---------------------------------------
+Add pre and post authorization calls to shell commands.
+Minor bugfixes and code cleanup
+The "More" bit in accounting records is now honoured.
+Fix a bug in convert.pl
+Redo accounting output routines. You can now name the accounting file
+in the configuration file.
+Change "svc" to "service" and "proto" to "protocol".
+You can use any string to name a ppp protocol, even one which doesn't yet exist.
+Add PPP/LCP special case processing
+Revised authorization algorithm (see user's guide)
+Add hex debug flag to allow skipping hex in packet dumps.
+Update user's guide to reflect changes
+
+Changes from Release 0.4 to release 1.0
+---------------------------------------
+Changed format of syslog messages to make writing scripts easier
+Added ability to use cleartext passwords instead of DES passwords
+Updated man page to reflect the fact that we use SIGUSR1 to re-read
+the config file. SIGHUP is now ignored.
+Updated the users guide.
+
+Changes from Release 1.0 to release 1.1
+---------------------------------------
+Release 1.1 corresponds to RCS version 1.64 of tac_plus
+(see tac_plus -v)
+
+A typo in the Solaris section of the Makefile has been fixed.
+
+The keyword 'des' has been introduced which must be used before all
+des encrypted passwords.
+
+The keyword 'password' has been changed to 'login', so
+    password = f23sac783n
+has become
+    login = des f23sac783n
+
+The convert.pl script knows about these changes.
+
+arap and chap now require the keyword 'cleartext' in front of their
+passwords.
+
+A cleartext, per-user, global password can now be configured, which
+works for login, arap and chap.
+
+The users_guide has been updated to include a list of all A/V pairs
+recognised by IOS 10.3(3) code.
+
+Some solaris binaries have been provided as a courtesy.
+
+Changes from Release 1.1 to release 2.0
+---------------------------------------
+generate_password.pl has been removed in favour of a C program
+generate_passwd.c
+
+The version number reported by tac_plus has been changed to agree with the
+release number. This is why the version has jumped to 2.0
+
+skey was broken by changes made in 1.1. These are now fixed.
+
+Documentation has been added for the authorization AV pairs supported
+by IOS releases 10.3(3) and 11.0.
+
+Changes from Release 2.0 to release 2.1
+---------------------------------------
+There are now Makefile definitions for most of the major platforms.
+
+Minor changes to remove some spurious debugging output.
+
+A prematurely closed NAS connection will now call the authentication
+function with the abort flag set, so that it can do any clean up it
+requires.
+
+syslog messages will contain the string "unknown" for usernames and
+ports which are NULL, so that the messages always contain a fixed
+number of fields.
+
+The authentication code has been rearranged to better reflect the
+structure of the API.
+
+The "default user = permit" directive is still accepted but is now
+deprecated in favour of "default authorization = permit".
+
+A bug in the handling of substring AV pairs which caused the attribute
+"addr" to erroneously match "addr-pool" has been fixed.
+
+Added new files: enable.c generate_passwd.c skey_fn.c
+
+New #defines have been added to make it easier to port tacacs+ to new
+systems.
+
+Many more iterations are allowed before an error is declared.
+
+Changes from Release 2.1 to release 2.2
+---------------------------------------
+The expiry field in the shadow file on Solaris machines is now
+honored, if it exists.
+
+Added TAC_PLUS_AUTHEN_SVC_NASI
+
+Changes from Release 2.2 to release F3.0.13
+-------------------------------------------
+NEW REVISION OF THE PROTOCOL corresponding to tacacs+.spec.v1.63.ps
+(which see) to increase security in the case of compromised keys.
+
+Inbound pap logins and outbound pap password are now configurable as
+separate entries for each principal.  Inbound pap logins are now
+declared by using a "pap = " configuration directive. Outbound PAP is
+now configured using "opap =".
+
+Substantial code rearrangement of authentication routines.
+
+Cleartext passwords can be up to 255 characters in length (previously
+only the first 8 characters were used).
+
+default service = permit is now fully recursive and now allows you to
+say default service = deny in case you belong to a group where the
+default is to permit.
+
+Include backward compatibility with old revision of the protocol
+(prior to v1.63).
+
+post_authorization scripts are now invoked for command authorization.
+
+Better sanity checking of authorization and accounting packets.
+
+The API has changed slightly. All character string fields in the
+identity structure are now allocated from the heap and can be up to
+255 bytes long (instead of being character arrays of 32 and 64 bytes,
+as specified in the API document revision 1.30 or earlier).
+
+Double quotes can now appear inside strings if they are escaped with a
+backslash.
+
+Added code which limits the number of simultaneous sessions a user can
+have (see MAXSESS in the user's guide).
+
+The accounting "more" bit is gone (It was deprecated from the spec).
+
+Hooks are now in so that if you have DES code, you can do ARAP more
+securely, per the new protocol.
+
+The packet read/write routines now handle exceptions more gracefully.
+
+Lots of stuff added to the user's guide.
+
+If you use a port number other than the default, the pidfile has the
+port number appended to it, in case you are running multiple daemons.
+We also now remove the pidfile when the daemon terminates via SIGTERM.
+
+user = DEFAULT has been added, deprecating "default authorization =
+permit". See the user's guide.
+
+Arbitrary service types can now be configured in the config file.
+
+REARMSIGNAL has been added for those systems which install one-shot
+signal handlers which need to be rearmed after use (LINUX, HPUX).
+
+A \n can now be embedded within strings.
+
+Concede defeat. Allow SIGHUP as synonym for SIGUSR1.
+
+Avoid symbol buffer overflow by checking the maximum length of a
+string or token.
+
+Make peer DNS lookup on incoming connections optional.
+
+Do not close socket when servicing a SIGHUP
+
+Fix a bad bug where service/cmd declarations which were not contiguous
+were parsed but ignored (reported by Gabor Kiss).
+
+Patch maxsessions to not count the current port on a different
+NAS. Add various other fixes to maxsession code.
+
+Add timeout to finger read routine.
+
+Changes from release F3.0.13 to F4.0.1
+-------------------------------------------
+Added MSCHAP routines
+
+CSCdi37706 exposed a bug in command authorization on the daemon.
+Change assemble_args so it returns "" if there are no command
+arguments.
+
+Changes from release F4.0.1 to F4.0.2
+-------------------------------------------
+Fix fseek problem in maxsess code
+
+Changes from release F4.0.2 to F4.0.3
+-------------------------------------------
+Add option for wtmp file logging in accounting
+Added -DGLIBC for Linux.
+Support PAP with des encrypted passwords
+Support a return code of 3 for external authorization scripts
+
+Changes from release F4.0.3 to F4.0.4
+-------------------------------------------
+merge F4.0.4 changes from disaster.com
+
+F4.0.4.1
+	- {log,pid}file permissions fixes	- partically from ian freislich
+	- add bind address (-B) option - partically from ian freislich
+	- fix pidfile removal on exit
+
+F4.0.4.2
+	- partial autoconf setup - much more to be done
+	- compile option IGN_HUP (ignore HUP signal) is history
+	- rename generated_password -> tac_pwd and add manpage
+	- rename tac_plus.1 -> tac_plus.8
+	- add tac_plus.confg.5
+	- add -h option to display usage info
+
+F4.0.4.3
+	- comment out the unnecessary lex and yacc tests from autoconf
+
+F4.0.4.4
+	- added more autoconf stuff
+	- fix-up tac_plus.8 manpage - still need to do autoconf-time option
+	  replacement
+	- fix-up tac_plus.conf manpage - incomplete
+	- fix-up tac_plus help message
+	- whitespace and formatting nits
+	- port host clause (minus type keyword) from devrim seral's tac_plus v9
+	  (http://www.gazi.edu.tr/tacacs/) at user request
+	- changed user-specific enable password handling such that it if one
+	  is specified for the user, the daemon does not check the host-specific
+	  or global enable password.
+	- make TACPLUS_ACCTFILE, TACPLUS_PIDFILE, and TACPLUS_LOGFILE autoconf
+	  knobs filling in pathsl.h and appopriate bits in manpages
+	- separated the frequently asked questions portion of the user_guide
+	  into the file FAQ
+	- OR successive -d (debug) options
+	- fix md5 for LP64
+F4.0.4.5
+	- use C99 stdint.h for int types
+	- linux's libwrap needs libnsl
+	- variable index in md5.c conflicts with index()
+F4.0.4.6
+	- fix a few compiler warnings
+	- add -e and -h options to tac_pwd
+	- include crypt.h if it exists (solaris)
+	- make configure options --with-{user,group}id work
+F4.0.4.7
+	- make configure option --with-skey work
+	- raise a few logs from INFO to NOTICE, to allow syslogd filtering of
+	  some rather noisey logs
+	- add ACL checking for authorization, for the case where tacacs is only
+	  used for authorization.
+F4.0.4.8
+	- if -B is used, add the bind address in the PID filename - from
+	  Ian Dickinson
+	- "acl" is an AV pair for service exec.  Within service attribute
+	  parsing, do not parse "acl" as the acl (or connection ACL) keyword.
+	  This is a hack; the parser is rather lame - noted by Bryce Kahle
+	- fix md4 for LP64
+	- do not accept skey keywords unless compiled with skey support
+	- fix skey enable password type - bit from Ed Ravin
+	- skey prompt ("challenge") is "S/Key challenge", not "Password"
+	- make "daemon" the default syslog facility and add a syslog config
+	  statement
+	- add support for user authentication via PAM
+
+F4.0.4.9
+	- clean-up bogus nopasswd_str protoypes that gcc4 did not like
+
+F4.0.4.10
+	- Fix PAM for linux, which does not offer PAM_AUTHOK for pam_set_item()
+	  and requires a pam_conv function even with PAM_SILENT - reported and
+	  tested by Stefan Oettl
+
+F4.0.4.11
+	- Fix OS X and build problems and do not prototype errno - from
+	  Georg Schwarz
+
+F4.0.4.12
+	- Fix typo in usage message - from Georg Schwarz
+	- Various tac_plus.conf.5 fixes - from Georg Schwarz
+	- escape the escape backslash of the ACL examples - from Georg Schwarz
+	- Fix a LP64 bug where VALUE (union v) consisting of pointer was
+	  intialized like an int - reported by brad dreisbach
+
+F4.0.4.13
+	- Rename convert.pl to tac_convert and install it
+	- install users_guide
+
+F4.0.4.14
+	- Add notes about PAM to the user guide and tac_plus.conf(5)
+	- Log login failures with the username, NAS address and NAS tty -
+	  requested by Andi Bauer
+	- ACLs were not applied through the default authentication
+	  (ie: user=DEFAULT) path - reported by Robert Lister
+
+F4.0.4.15
+	- Check data lengths in debugging functions - reported by Antonin
+	  Vitecek
+	- Fix syslog facility selection - from Timo Vanoni & Josef Voggesser
+	- Add -G/foreground option
+	- Deal with missing socklen_t
+
+F4.0.4.16
+	- Few innocuous changes from or inspired by FreeBSD ports
+	- Deal with max-session finger format difference in a way that does not
+	  require knowing which IOS is being fingered.
+	- The header encryption field is really a flags field which includes
+	  a single-session option (which we'd like to support)
+	- Check return of write() for interrupts when writing arguments to
+	  external scripts.
+	- -G was not remaining in foreground - From Nathan Schrenk
+	- Do not attempt to remove the pidfile if the pidfilebuf was truncated
+	  or we could not open the file.
+	- Add 'accounting syslog;' configuration knob - mostly from Mark Ellzey
+	  Thomas
+	- Notes about PAM - from Aaron Scarisbrick
+	- Allow PAM debug message with tac_plus password debugging option - from
+	  Aaron Scarisbrick
+	- Allow \'s within quoted words in tac_plus.conf - from Jesse Zbikowski
+	- Allow 'file' <password_spec> for host and user enable - part from
+	  Jeff Gehlbach via Daniel Schmidt
+	- Fix possible buffer overflow for arap - noted by Oren Nechushtan
+
+F4.0.4.17
+	- Move REARMSIGNAL definition to autoconf
+	- Move REAPCHILD definition to autoconf and check if SIG_IGN works
+	- Move SIGCHLD handling to apply to all daemon personalities - partly
+	  from John Payne
+
+F4.0.4.18
+	- Fix missing printf argument in debug output
+	- Add "enable = nopassword" to users, groups and hosts.
+
+F4.0.4.19
+	- offer $ip to before/after authorization scripts
+	- wtmp and accounting files do not need to be mutually exclusive
+	- add authorization script example - from Daniel Schmidt
+	- add partial support for single-connection mode
+	- convert select()s to poll()s

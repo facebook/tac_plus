@@ -1,0 +1,632 @@
+FREQUENTLY ASKED QUESTIONS
+--------------------------
+Q). Can the daemon authenticate against LDAP, SecurID, and similar?
+A). PAM is the best manner of integrating LDAP, SecurID, and similar with
+    Tacacs.  Tacacs then uses PAM to resolve authentication requests and
+    PAM in-turn makes queries to/through the given service.
+
+    Some PAM configuration is necessary.  There are at least three different
+    PAM configuration methods; no attempt to guide your configuration has
+    been made by us.
+
+    To use PAM, the daemon must have been built with PAM support.  The
+    configure script attempts to location the PAM libraries by default and
+    will include PAM support if they're found.  Otherwise, you have to figure
+    out why its not finding them.
+
+    On Linux, the pam-dev library packages are needed.
+
+Q). Does tac_plus required a working DNS?
+A). As distributed, whenever a START packet arrive, the daemon makes a
+    call to getpeername to find out the name of the requestor. Depending
+    entirely on how your Unix host is set up, this may make DNS
+    queries. If this is a problem, comment out the code in tac_plus.c
+    which does this, and just use ip addresses instead of host names.
+
+Q). Is the "name" field used for anything
+A). No. It's purely for documentation. I had once thought it might be
+    useful when outputting error messages, and that you might need the
+    information if you converted a passwd(5) style file, but no use is
+    currently made of the field.
+
+Q). Why do I get PPP authorization failures because of "no username in
+    request" when I've already logged in and authenticated?
+A). With "aaa authentication PPP default tacacs+", the ppp
+    authentication overrides the earlier login authentication.  If the ppp
+    authentication fails, the username ends up blank.  Changing the config
+    to "aaa authentication ppp default if-needed tacacs+" fixes this
+    problem.
+
+Q). I'm sure I configured it correctly, but accounting still doesn't
+    work.
+A). You will find that although you can configure accounting in 10.3,
+    and it outputs debug messages, it doesn't send any accounting
+    packets. This is because Accounting only works from 11.0 onwards.
+
+Q). Does TACACS+ use a database instead of a flat (/etc/passwd like)
+    file to decrease search times, say if we are talking about a large
+    database of 40,000 users?
+A). The TACACS+ authentication database is held internally as a hash
+    table. This makes lookup times fast and fairly linear, at the expense
+    of making the server use potentially large amounts of memory space.
+    NOTE: If you specify that the server uses passwd(5) files for
+    authentication, then you don't get this speed benefit, but you save
+    space.
+
+    If you're willing to write the code, it should be a relatively simple
+    matter to interface the code to a database scheme e.g. unix dbm files,
+    or some proprietary database package, if you wish.
+
+Q). Is there any way to avoid having clear text versions of the
+    ARAP and CHAP secrets in the configuration file?
+
+A). CHAP and ARAP require that the server knows the cleartext password (or
+    equivalently, something from which the server can generate the
+    cleartext password). Note that this is part of the definition of CHAP
+    and ARAP, not just the whim of some Cisco engineer who drank too much
+    coffee late one night.
+
+    If we encrypted the CHAP and ARAP passwords in the database, then we'd
+    need to keep a key around so that the server can decrypt them when
+    CHAP or ARAP needs them.  So this only ends up being a slight
+    obfuscation and not much more secure than the original scheme.
+
+    In extended TACACS, the CHAP and ARAP secrets were separated from the
+    password file because the password file may be a system password file
+    and hence world readable.  But with TACACS+'s native database, there
+    is no such requirement, so we think the best solution is to
+    read-protect the files.  Note that this is the same problem that a
+    kerberos server has.  If your security is compromised on the kerberos
+    server, then your database is wide open.  Kerberos does encrypt the
+    database, but if you want your server to automatically restart, then
+    you end up having to "kstash" the key in a file anyway and you're back
+    to the same security problem.
+
+    So storing the cleartext password on the security server is really an
+    absolute requirement of the CHAP and ARAP protocols, not something
+    imposed by TACACS+.
+
+    We could have chosen a scheme where the NAS sends the challenge
+    information to the TACACS+ daemon and the daemon uses the cleartext
+    password to generate the response and returns that, but that means
+    that we must include specific protocol knowledge into the protocol for
+    both ARAP and CHAP and we would have to update the protocol every time
+    a new authentication protocol is added.  Hence we decided to go with
+    the SENDPASS mechanism.
+
+    Note that the above doesn't apply to PAP. You can keep an inbound PAP
+    password des-encrypted, since all you need to do with it is verify
+    that the password the principal gave you is correct.
+
+Q). How is the typical login authentication sequence done?
+A). NAS sends START packet to daemon
+    Daemon send GETUSER containing login prompt to NAS
+    NAS prompts user for username
+    NAS sends pkt to daemon
+    Daemon sends GETPASS containing password prompt to the NAS
+    NAS prompts user for password
+    NAS sends pkt to daemon
+    Daemon sends accept, reject or error to NAS
+
+
+Q). Is there a GUI for the configuration file?
+A). No. Use your favourite text editor.
+
+
+Q). What does "default service = permit" really do?
+A). When a request comes in to authorize exec startup, or ppp (with
+    protocol lcp, ip, ipx), or slip, or arap or a specific command, the
+    daemon looks for a matching declarations for the user (or groups the
+    user is a member of).
+
+    For exec startup, it looks for a "service=exec" OR any command
+    configured.
+
+    For ppp, it looks for a "service=ppp" and "protocol=(one of lcp, ip, ipx)".
+
+    For slip there must be a "service=slip" and for arap a "service=arap"
+    clause.
+
+    For specific commands, there must be a matching cmd=<cmdname>.
+
+    If these aren't found, authorization will fail, *unless* you say
+    "default service = permit".
+
+Q). How do I make PAP work?
+A). Avoid using PAP if possible since it's not very secure. If you
+    *must* use it, PAP passwords may be specified along with arap and chap
+    passwords for each user. Note that the details of this changed in
+    version 3.0 and onwards.
+
+    For outbound PAP, where you are forced to send a password to the
+    remote host to identify yourself, there is now a separate "opap"
+    directive e.g.
+
+	opap = cleartext OOOO
+
+    You use this to set the outbound PAP password. It must be a cleartext
+    password.
+
+    NOTE: It is very bad practice to use an outbound PAP password that is
+    the same as any of your inbound passwords. For this reason, a "global"
+    password does not apply to outbound PAP, only to inbound PAP,
+    bidirectional CHAP and ARAP.
+
+    Before 3.0, PAP logins were treated like ordinary user logins, so you
+    needed to declare a user in the Daemon configuration file whose name
+    was typically the remote hostname (or user), with a login password, in
+    order to process the PAP request.
+
+Q). How can I deny some one from telneting from a commserver by ip
+    address only. i.e. when command is 10.0.1.6 rather than telnet
+    10.0.1.6.
+A).  The best way to restrict telnet access is by applying an outbound
+    access list via the access class command (or equivalently, via the
+    "acl" avpair). The NAS configuration command "access-class <n> out"
+    for example applies a pre-defined standard IP access list (where n is
+    a number from 1 through 99) that governs telnet access from a NAS.
+
+    E.g. the following configuration commands permit outgoing Telnet
+    access from line 1 on the NAS *only* to hosts on network 192.85.55.0:
+
+	access-list 12 permit 192.85.55.0 0.0.0.255
+	line 1
+	access-class 12 out
+
+    Note: you must define "access-list 12 permit 192.85.55.0 0.0.0.255" on
+    the NAS. Only then can you use the acl avpair to apply it to a line
+    that a user dials in on.
+
+    Alternatively, you can try configuring "transport preferred none" on
+    the lines in question. This will force a user to always type "telnet
+    10.0.1.6" in order to telnet out from the NAS.  Then you can apply
+    command authorization to this command to restrict it.
+
+Q). I have an autocommand configured in the NAS-local database and I'm
+    using "aaa authentication local-override". The autocommand doesn't
+    work, but the username/password does. Why?
+A). The "local-override" only applies to the authentication portion of
+    the local database, so if you want an autocommand for this user, you
+    need to also do:
+
+	aaa authorization exec local if-authenticated
+
+    This will use the local DB entry if one exists, allow authenticated
+    users otherwise, or fail.
+
+    We don't have a "aaa authorization local-override" like we do for
+    authentication. Unlike authentication, the local method for
+    authorization is sort of equivalent to a local-override.
+
+Q). Can tacacs+ only be enabled on a global basis? I want to
+    selectively turn it on for, e.g. only modem-connected lines. How do I
+    do this?
+A). You turn tacacs+ ON on a global basis, but you can then change the
+    behavior of individual lines to whatever you want, e.g.
+
+        aaa authentication login default tacacs+ none
+        aaa authentication login oldstyle line
+        aaa authentication login none none
+        line 1 16
+        login authentication default
+        line vty 0 4
+        login authentication oldstyle
+        line 0
+        login authentication none
+
+    Note that unfortunately, you can't (yet) apply authorization
+    differently to selected lines and interfaces.
+
+Q). I have leased lines running PPP, and AAA authorization is also
+    configured, so the authorization on the leased lines fails.  What should
+    I do?
+A). Since you can't (yet) configure authorization on a per-line basis,
+    you have to turn on authentication on the leased lines running PPP and
+    configure your T+ server so that it will authorize these lines
+    correctly.
+
+    A more demanding alternative is to modify the TACACS+ server source code
+    to allow any authorizations coming in from the port "SerialXXX" to
+    succeed.
+
+    A third possibility is to not use PPP on those lines, e.g. use HDLC
+    instead. HDLC doesn't require authentication or authorization.
+
+Q). What are the memory recommendations for TACACS+?
+A). Unless you're using passwd style files, TACACS+ holds entries in
+    hash tables in memory. The overhead is modest e.g. each user entry
+    occupies 72 bytes, plus space for strings like username and password
+    etc. Access time should thus be pretty constant regardless of number
+    of users. On a sparc 2, a config file containing 2000 users requires
+    about 0.5M of swap.
+
+Q). How many users will a TACACS+ server support?  What happens when
+    the maximum is exceeded?
+
+    There are 2 issues. The first is that each entry in the config file
+    occupies memory (swap space) so you could run out of swap space either
+    starting up the daemon or when it forks to answer incoming requests
+    (see above). If this happens, the daemon will drop the connection
+    which should appear as an error to the NAS) and the logfile will
+    contain appropriate error messages. The solution is usually to add
+    more disk space for swapping.
+
+    The second issue is speed: Using config files containing 75,000 user
+    entries, I'm seeing about 3 authentications per second on a sparc 2
+    without noticeable performance impact, though I haven't benchmarked
+    this formally.
+
+    So more than about 3 authentications per second on this platform will
+    result in users seeing delays and having to wait for prompts.  The
+    usual solution to this is to add more daemons to spread the load out.
+
+Q). How many characters may a TACACS+ Username and Password contain?
+A). The short answer is 31 bytes of username, with up to 254 bytes of
+    password if they are cleartext (8 bytes if passwords are des encrypted).
+
+    The long answer is that the Cisco NAS allocates a buffer of 1024
+    bytes, so this is the maximum you can type in, in response to a NAS
+    prompt.
+
+    But the protocol spec allows a username or password length field of
+    just one byte in an authentication packet, so only the first 255 of
+    these characters can be sent to the daemon.
+
+    Then, the API spec states that the username in the identity structure
+    on the daemon is 32 bytes long, so only the first 31 bytes of username
+    will be copied from the authentication packet into this structure,
+    which is then null-terminated.
+
+    The password, on the other hand, is copied into malloc'ed memory, so
+    it can still be up to 255 characters long.
+
+    Now if it's a des encrypted password, then only the first 8 bytes are
+    significant, per the common unix implementations of crypt.
+
+    Lastly, there is also the question of how long a username/password can
+    be configured in the daemon configuration file. The answer is given by
+    the value of MAX_INPUT_LINE_LEN, currently set to 255, which
+    determines the length of the longest string you can enter in the
+    configuration file.
+
+Q). What is the format of accounting records?
+A). Accounting records are text lines containing tab-separated fields. The
+    first 6 fields are always the same. These are:
+
+	timestamp, NAS name, username, port, address, record type.
+
+    Following these, a variable number of fields are written, depending on
+    the accounting record type. All are of the form attribute=value. There
+    will always be a task_id field.
+
+    Current attributes are:
+
+	"unknown"
+	"service"
+	"start_time"
+	"port"
+	"elapsed_time"
+	"status"
+	"priv_level"
+	"cmd"
+	"protocol"
+	"cmd-arg"
+	"bytes_in"
+	"bytes_out"
+	"paks_in"
+	"paks_out"
+	"address"
+	"task_id"
+	"callback-dialstring"
+	"nocallback-verify"
+	"callback-line"
+	"callback-rotary"
+
+    I expect more will be added over time.
+
+    Example records are thus:
+
+    Thu Jul 13 13:35:28 1995	cherub.cisco.com	chein	tty5	171.69.1.141	stop	task_id=12028	service=exec	port=5	elapsed_time=875
+    Thu Jul 13 13:37:04 1995	cherub.cisco.com	lol	tty18	171.69.1.129	stop	task_id=11613	service=exec	port=18	service=exec	port=18	elapsed_time=909
+    Thu Jul 13 14:09:02 1995	cherub.cisco.com	billw	tty18	171.69.1.152	start	task_id=17150	service=exec	port=18
+    Thu Jul 13 14:09:02 1995	cherub.cisco.com	billw	tty18	171.69.1.152	start	task_id=17150	service=exec	port=18	service=exec	port=18
+
+    Elapsed time is in seconds, and is the field most people are usually
+    interested in.
+
+Q). How do I limit the number of sessions a user can have?
+A). The TACACS+ daemon can enforce how many simultaneous sessions a
+    given user is allowed to have.  You must compile the daemon with the
+    MAXSESS symbol defined (see the Makefile).
+
+    Maximum sessions are configured on the daemon for a user as follows:
+
+    user = joeslip {
+	login = cleartext XXX
+
+	# only allow two sessions max for joeslip
+	maxsess = 2
+
+	name = "Joe SLIP User"
+	...
+    }
+
+    It can also be configured under a group:
+
+    group = slip_users {
+	maxsess = 2
+	...
+    }
+    ...
+    user = fred {
+	...
+	member = slip_users
+	...
+    }
+
+    The daemon keeps a count of how many sessions a given user owns by
+    monitoring START and STOP accounting records.  Thus, exec and network
+    accounting must be configured for this feature to operate for exec and
+    ppp users.
+
+    As the restriction is enforced during the authorization phase of
+    login, exec and network authorization must be configured as well, viz:
+
+	aaa authentication login default tacacs+
+	aaa authentication ppp default tacacs+
+	aaa authorization exec tacacs+
+	aaa authorization network tacacs+
+	aaa accounting exec start-stop tacacs+
+	aaa accounting network start-stop tacacs+
+
+    Due to network outages (or other disruptions), it is possible for the
+    TACACS+ daemon's record of usage to become out of sync with reality,
+    so before denying access because it thinks a user is running too many
+    sessions, the TACACS+ daemon will use the finger service on the NAS to
+    verify how many sessions a user is running there.
+
+    If the result of finger indicates that the daemon should permit
+    access, access will be granted.  Note that for this check to work via
+    finger, "service finger" must also be configured on the NAS.
+
+    Lastly, note that because finger output truncates usernames at 10
+    characters, you may encounter trouble if you have users whose names
+    are not unique within those first 10 characters.
+
+    Also recall that authorization works differently on the console. So
+    many people locked themselves out of their boxes after configuring
+    authorization, that we stopped requiring authorization on the console
+    for authenticated users. Since there's no authorization on the
+    console, MAXSESS is not enforced there.
+
+Q). How can I configure time-outs on an interface via Tacacs+?
+A). Certain per-user/per-interface timeouts may be set by Tacacs+
+    during authorization. As of 11.0, you can set an arap session timeout,
+    and an exec timeout. As of 11.1 you can also set an exec idle timeout.
+
+    There are currently no settable timeouts for PPP or SLIP sessions, but
+    there is a workaround which applies to ASYNC PPP/SLIP idle timeouts
+    started via exec sessions only: This workaround is to set an EXEC
+    (idletime) timeout on an exec session which is later used to start up
+    PPP or SLIP (either via a T+ autocommand or via the user explicitly
+    invoking PPP or SLIP). In this case, the exec idle timeout will
+    correctly terminate an idle PPP or SLIP session. Note that this
+    workaround cannot be used for sessions which autoselect PPP or SLIP.
+
+    An idle timeout terminates a connection when the interface is idle for
+    a given period of time (this is equivalent to the "session-timeout"
+    Cisco IOS configuration directive). The other timeouts are
+    absolute. Of course, any timeouts set by Tacacs+ apply only to the
+    current connection.
+
+
+    user = lol {
+	login = cleartext foobar
+	service = exec {
+	    # disconnect lol if there is no traffic for 5 minutes
+	    idletime = 5
+	    # disconnect lol unconditionally after one hour
+            timeout = 60
+	}
+    }
+
+    You also need to configure exec authorization on the NAS for the above
+    timeouts, e.g.
+
+        aaa authorization exec tacacs+
+
+    Note that these timeouts only work for async lines, not for ISDN currently.
+
+
+    Note also that you cannot use the authorization "if-authenticated"
+    option with these parameters, since that skips authorization if the
+    user has successfully authenticated.
+
+Q). How do I send VPDN forwarding decisions to an authorization server?
+A). In 11.2 onwards, VPDN NASs can use T+ to allow an authorization
+    server to make the decision to forward users.
+
+    If VPDN forwarding is turned on, and the username is of the form
+    user@domain, and "domain" matches a vpdn outgoing configured domain,
+    then an authorization attempt is made for "domain" (see below).
+
+    When making an authorization call for VPDN, a service type of "ppp"
+    with a protocol type of "vpdn", with a username of "domain" will be
+    made e.g. when a PPP user comes up on a line with the username
+    foo@bar.com, if "vpdn enable" and "aaa authorization ...." is enabled
+    on the box, then a one-time authorization of the name "bar.com" is
+    attempted.
+
+    If this authorization is successful, no local authentication is
+    attempted on the NAS, and the connection is forwarded via VPDN
+    instead.
+
+    If no VPDN-specific information comes back from this authorization
+    call, the login proceeds as follows:
+
+    If tacacs-server directed-requests are configured (note: this is true
+    by default), then IOS will strip off the domain part of a name of the
+    form user@domain and use "domain" to try and select a T+ server. If
+    successful, the username portion "user", without the domain, will be
+    used for all subsequent authentication, authorization and accounting.
+
+    If directed requests are turned off, then the entire username
+    user@domain is treated as a username.
+
+    vpdn specific information includes the attributes "tunnel-id",
+    "source-ip" (deprecated) and "ip-addresses":
+
+    tunnel-id:
+	This AV pair specifies the username that will be used to
+	authenticate the tunnel over which the individual user MID
+	will be projected.  This is analogous to the "NAS name" in the
+	"vpdn outgoing" command.
+
+    ip-addresses:
+	This is a list of possible IP addresses that can be used for
+	the end-point of the tunnel. Consult the text at the end of
+	this document for more details on how to configure this
+	attribute.
+
+    source-ip: (This is now deprecated. It began in release 11.2(1.4),
+	    and was removed in 11.2(4.0.2)).
+	This ip address will be used as the source of all VPDN packets
+	generated as part of the VPDN tunnel (see the source-ip
+	keyword in the vpdn outgoing command).
+
+    Tacacs+ syntax
+    --------------
+
+    The following syntax is used on the public domain Tacacs+ server.
+
+    username = domain {
+	service = ppp protocol = vpdn {
+	    tunnel-id = <name for tunnel authentication>
+	    ip-addresses = <addr> [<addr> ...]
+	    source-ip = <ip-address>
+	}
+    }
+
+    In addition the T+ server can be used to store the usernames for both
+    the NAS (the username specified by "tunnel-id" above) and the Home
+    Gateway.  These will be used to authenticate the tunnel.
+
+    Example:
+
+    user = foobar.cisco.com {
+	service = ppp protocol = vpdn {
+	    tunnel-id = my_nas
+	    ip-addresses = "173.20.12.19 173.20.12.20"
+	    source-ip = 173.5.10.1
+	}
+    }
+
+    user = my_nas {
+	global = cleartext egad
+    }
+
+    user = my_home_gateway {
+	global = cleartext wowser
+    }
+
+    IOS Configuration
+    -----------------
+
+    To enable AAA assisted VPDN forwarding on a NAS, the following minimum
+    configuration is required:
+
+	vpdn enable
+	aaa new-model
+	aaa authorization network tacacs+ ...
+
+    In addition, if the passwords for the home gateway and NAS are stored
+    on the T+ daemon, the command
+
+	aaa authentication login tacacs+ ....
+
+    should also be present.
+
+    Beginning with release 11.2(1.4), the additional configuration
+
+	vpdn outgoing cisco.com ip NAS [ source-ip X.X.X.X ]
+
+    can be used. This changes in 11.2(4.0.2) and becomes:
+
+	vpdn source-ip X.X.X.X
+	vpdn outgoing cisco.com ip NAS
+
+
+Q). Can someone expand on the use of the "optional" keyword.
+A). Most attributes are mandatory i.e. if the daemon sends them to the
+    NAS, the NAS must obey them or deny the authorization. This is the
+    default. It is possible to mark attributes as optional, in which case
+    a NAS which cannot support the attribute is free to simply ignore it
+    without causing the authorization to fail.
+
+    This was intended to be useful in cutover situations where you have
+    multiple NASes running different versions of IOS, some of which
+    support more attributes than others. If you make the new attributes
+    optional, older NASes could ignore the optional attributes while new
+    NASes could apply them. Note that this weakens your security a little,
+    since you are no longer guaranteed that attributes are always applied
+    on successful authorization, so it should be used judiciously.
+
+Q). Can I do do address pooling on the T+ daemon?
+A). Not really since nothing on the daemon tracks whether an address
+    is already in use. The best way to do manage address pools is to
+    define a non-overlapping pool of addresses on each NAS and return the
+    name of this pool during authorization whenever a user logs in e.g.
+
+    NAS:
+
+	ip local pool foo 1.0.0.1 1.0.0.10
+
+    Daemon:
+
+    user = lol {
+	service = ppp protocol = ip {
+	    addr-pool = foo
+	}
+    }
+
+
+Q). What about MSCHAP?
+A). Version F4.X contains mschap support. Mschap is configured the
+    same way as chap, only using the "mschap" keyword in place of the
+    "chap" keyword.
+
+    Like ARAP, MSCHAP works best when you have a des library (see the note
+    at the beginning of this document), but this is optional, as the DES
+    calculation can be done by the NAS instead. It also optionally
+    requires a key from Microsoft which is not public domain, but this can
+    also be done on the NAS too, so you can live without it.
+
+    To compile the daemon with MSCHAP support, uncomment the MSCHAP line
+    in the Makefile. This will add the MSCHAP code to your daemon. You can
+    leave MSCHAP_DES undefined, in which case the MSCHAP DES calculation
+    will be done by NAS, and no special MSCHAP key will be required.
+
+    If you have a DES library and want to use it with MSCHAP (this is more
+    efficient for authentication), then you can also uncomment the
+    MSCHAP_DES and MSCHAP_MD4_SRC lines in the Makefile. This will ensure
+    that the DES calculation done in the daemon. A key will need to be
+    obtained from Microsoft and used to replace the definition of
+    MSCHAP_KEY in the file mschap.h. If you're thinking by now that this
+    is all too much trouble, I can't say I blame you....
+
+Q). Can I do wtmp-style logging like xtacacd used to do?
+A). Wtmp file logging is supported. The "-u <wtmpfilename>" command
+    line flag can be used to specify a filename which will be used for
+    logging wtmp style records instead of the regular T+ accounting
+    records.
+
+    wtmp records are generated into wtmpfilename. Since file locking is
+    also used when writing to wtmpfilename, the usual provisos regarding
+    NFS and locking (see accounting above) should be observed.
+
+    To generate correct wtmp log records, the NAS needs to be configured
+    as follows:
+
+	aaa accounting exec stop-only tacacs+
+	aaa accounting network stop-only tacacs+
+	aaa accounting system start-stop tacacs+

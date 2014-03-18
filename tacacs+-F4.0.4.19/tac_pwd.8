@@ -1,0 +1,36 @@
+.\"
+.hys 50
+.TH "tac_pwd" "8" "22 March 2003"
+.SH NAME
+tac_pwd \- generate DES encryption of a password
+.\"
+.SH SYNOPSIS
+.B tac_pwd
+[\fB\-eh\fP]
+[\c
+salt]
+.\"
+.SH DESCRIPTION
+.B tac_pwd 
+prompts for a clear-text password and produces a DES encryption of that
+password on stdout which may be used in lieu of the clear-text representation
+in the
+.BR tac_plus.conf (5).
+.PP
+The DES salt may be provide as a command-line argument.
+.PP
+.SH COMMAND-LINE OPTIONS
+.TP
+.\"
+.TP
+.B \-e
+Do not echo the plain-text password to the terminal.
+.\"
+.TP
+.B \-h
+Display help message.
+.\"
+.SH "SEE ALSO"
+.BR crypt (3),
+.BR tac_plus (8),
+.BR tac_plus.conf (5)

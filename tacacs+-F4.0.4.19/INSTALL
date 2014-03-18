@@ -1,0 +1,48 @@
+This is a modified version of Cisco's tacacs+ (tac_plus) "developer's
+kit."
+
+Quick Installation Guide (an example):
+
+1) ./configure [--prefix=<basedir>]
+   By default, All tac_plus crud will be installed under /usr/local.
+   This can be overridden with the --prefix option.  E.g.:
+
+	./configure --prefix=/usr/pkg
+
+   see ./configure --help for other configure options.
+
+2) make install
+
+3) it may be necessary, or you may want to, add tacacs to your /etc/services
+   file in order for tacacs to work properly.  eg:
+
+   tacacs	tcp/49
+
+4) read the tac_plug(8) manual page
+
+5) Send any bugs, suggestions or updates to tac_plus@shrubbery.net.
+   See the web page at http://www.shrubbery.net/tac_plus.
+
+Misc info:
+
+There is also a list called TACPLUS-L, run by disaster.com, created for
+the purpose of information exchange between TACACS+ Users and aiding
+TACACS+ users and prospective users in many issues including but not
+limited to technical support, bug reports and workarounds, configuration
+information, recommendations for future versions of TACACS+, and general
+talk about TACACS+ development, implementation, administration, etc.
+
+To subscribe to the TACPLUS-L list, send a message to
+
+        tacplus-l-request@disaster.com
+
+In the body of the letter, enter
+
+        SUBSCRIBE TACPLUS-L your Name
+
+to be automatically added, or visit their web page at
+http://www.disaster.com/tacplus/.
+
+Also, Robert Kiessling maintains a TACACS+ FAQ at
+http://www.easynet.de/tacacs-faq.
+
