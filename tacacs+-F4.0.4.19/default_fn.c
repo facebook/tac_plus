@@ -201,18 +201,20 @@ default_fn(struct authen_data *data)
     case TAC_PLUS_AUTHEN_STATUS_ERROR:
 	return(0);
     case TAC_PLUS_AUTHEN_STATUS_FAIL:
-	if (session.peer && clientip)
-	    report(LOG_NOTICE, "login failure: user=%s device=%s port=%s client=%s",
-		   name == NULL ? "unknown" : name,
-		   session.peer, session.peerip, session.port, clientip);
-	else if (session.peer)
-	    report(LOG_NOTICE, "login failure: user=%s device=%s port=%s client=%s",
-		   name == NULL ? "unknown" : name,
-		   session.peer, session.peerip, session.port, "unknown");
-	else
-	    report(LOG_NOTICE, "login failure: user=%s device=%s port=%s",
-		   name == NULL ? "unknown" : name,
-		   session.peerip, session.port);
+	    if (session.peer && clientip)
+	      report(LOG_NOTICE, "login failure: user=%s device=%s port=%s client=%s",
+		     name == NULL ? "unknown" : name,
+		     session.peer, session.peerip, session.port, clientip);
+	    else if (session.peer)
+	      report(LOG_NOTICE, "login failure: user=%s device=%s port=%s client=%s",
+		     name == NULL ? "unknown" : name,
+		     session.peer, session.peerip, session.port, "unknown");
+	    else
+	      report(LOG_NOTICE, "login failure: user=%s device=%s port=%s",
+		     name == NULL ? "unknown" : name,
+		     session.peerip, session.port);
+      return(0);
+
     case TAC_PLUS_AUTHEN_STATUS_PASS:
         if (session.peer && clientip)
             report(LOG_NOTICE, "login success: user=%s device=%s port=%s client=%s",
@@ -226,7 +228,7 @@ default_fn(struct authen_data *data)
             report(LOG_NOTICE, "login success: user=%s device=%s port=%s",
                    name == NULL ? "unknown" : name,
                    session.peerip, session.port);
-	return(0);
+	      return(0);
 
     default:
 	report(LOG_ERR, "%s %s: default_fn set bogus status value %d",

@@ -2,11 +2,11 @@ Summary: TACACS+ Daemon
 Name: tacacs+
 Group: Networking/Servers
 Version: F4.0.4.19
-Release: 5fb
+Release: 6fb
 License: Cisco
 
 Packager: JJ Crawford <jj@fb.com>
-Vendor: Cisco
+Vendor: Shrubbery Networks
 
 Source: %{name}-%{version}.tar.gz
 Patch0: tacplus-pam.patch
@@ -16,6 +16,7 @@ Patch3: tacplus-md5pw.patch
 Patch4: tacplus-logfac.patch
 Patch5: tacplus-noconnect.patch
 Patch6: tacplus-logsuc.patch
+Patch7: tacplus-logfix.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
@@ -33,6 +34,7 @@ Requires: pam, tcp_wrappers
 %patch4 -p0
 %patch5 -p0
 %patch6 -p0
+%patch7 -p0
 
 %{__cat} <<'EOF' >tac_plus.sysvinit
 #!/bin/bash
