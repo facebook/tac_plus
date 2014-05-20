@@ -484,6 +484,8 @@ struct acct_reply {
 
 #define DEFAULT_USERNAME "DEFAULT"
 
+#define TAC_PLUS_PORTSTR "49"
+
 #include "parse.h"
 
 /* Node types */

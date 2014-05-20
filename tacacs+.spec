@@ -2,10 +2,10 @@ Summary: TACACS+ Daemon
 Name: tacacs+
 Group: Networking/Servers
 Version: F4.0.4.19
-Release: 6fb
+Release: 7fb
 License: Cisco
 
-Packager: JJ Crawford <jj@fb.com>
+Packager: Cooper Lees <cooper@fb.com>
 Vendor: Shrubbery Networks
 
 Source: %{name}-%{version}.tar.gz
