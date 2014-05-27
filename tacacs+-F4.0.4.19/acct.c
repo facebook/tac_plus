@@ -59,8 +59,6 @@ accounting(u_char *pak)
     }
 
     account(pak);
-
-    free(pak);
 }
 
 static void
