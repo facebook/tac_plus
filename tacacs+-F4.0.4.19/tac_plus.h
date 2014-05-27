@@ -17,6 +17,8 @@
  * IS'' AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
  * WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
  * FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * Facebook Fork 2014 Cooper Lees <cooper@fb.com>
  */
 
 #include "config.h"
@@ -172,6 +174,7 @@
  */
 
 #define AUTHEN_NAME_SIZE 128
+#define NI_MAXHOST 1025
 
 struct authen_type {
     char authen_name[AUTHEN_NAME_SIZE];
@@ -671,7 +674,7 @@ struct peruser {
     char username[64];		/* User name */
     char NAS_name[32];		/* NAS user logged into */
     char NAS_port[32];		/*  ...port on that NAS */
-    char NAC_address[32];	/*  ...IP address of NAS */
+    char NAC_address[128];	/*  ...IP address of NAS */
 };
 #endif /* MAXSESS */
 

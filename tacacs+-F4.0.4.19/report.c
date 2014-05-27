@@ -20,6 +20,7 @@
  */
 
 #include "tac_plus.h"
+#include "pathsl.h"
 #include <stdio.h>
 
 #ifdef AIX
@@ -35,8 +36,6 @@
 #endif
 
 FILE *ostream = NULL;
-
-char *logfile = TACPLUS_LOGFILE;
 
 /* report:
  *
@@ -160,14 +159,14 @@ report(priority, fmt, va_alist)
     if (debug) {
 	int logfd;
 
-	logfd = open(logfile, O_CREAT | O_WRONLY | O_APPEND, 0644);
+	logfd = open(TACPLUS_LOGFILE, O_CREAT | O_WRONLY | O_APPEND, 0644);
 	if (logfd >= 0) {
 	    char buf[512];
 	    time_t t = time(NULL);
 	    char *ct = ctime(&t);
 
 	    ct[24] = '\0';
-	    tac_lockfd(logfile, logfd);
+	    tac_lockfd(TACPLUS_LOGFILE, logfd);
 	    sprintf(buf, "%s [%ld]: ", ct, (long)getpid());
 	    write(logfd, buf, strlen(buf));
 	    if (priority == LOG_ERR)

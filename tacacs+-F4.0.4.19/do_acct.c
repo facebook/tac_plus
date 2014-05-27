@@ -20,6 +20,7 @@
  */
 
 #include "tac_plus.h"
+#include "pathsl.h"
 #include <time.h>
 #if defined(__DragonFly__) && !defined(O_SYNC)
 #define	O_SYNC	O_FSYNC
@@ -37,7 +38,7 @@ acct_write(char *string)
     if (write(acctfd, string, strlen(string)) != strlen(string)) {
 	report(LOG_ERR, "%s: couldn't write acct file %s %s",
 	       session.peer,
-	       session.acctfile, strerror(errno));
+	       TACPLUS_ACCTFILE, strerror(errno));
 	return(1);
     }
 
@@ -74,17 +75,17 @@ do_acct_file(struct acct_rec *rec)
     ct[24] = '\0';
 
     if (!acctfd) {
-	acctfd = open(session.acctfile, O_CREAT | O_WRONLY | O_APPEND, 0644);
+	acctfd = open(TACPLUS_ACCTFILE, O_CREAT | O_WRONLY | O_APPEND, 0644);
 	if (acctfd < 0) {
 	    report(LOG_ERR, "Can't open acct file %s -- %s",
-		   session.acctfile, strerror(errno));
+		   TACPLUS_ACCTFILE, strerror(errno));
 	    return(1);
 	}
     }
-    if (!tac_lockfd(session.acctfile, acctfd)) {
+    if (!tac_lockfd(TACPLUS_ACCTFILE, acctfd)) {
 	rec->admin_msg = tac_strdup("Cannot lock log file");
 	report(LOG_ERR, "%s: Cannot lock %s",
-	       session.peer, session.acctfile);
+	       session.peer, TACPLUS_ACCTFILE);
 	return(1);
     }
 
@@ -155,16 +156,16 @@ do_acct_syslog(struct acct_rec *rec)
 
     switch(rec->acct_type) {
 	case ACCT_TYPE_UPDATE:
-	    acct_type = "update"; 
+	    acct_type = "update";
 	    break;
 	case ACCT_TYPE_START:
-	    acct_type = "start"; 
+	    acct_type = "start";
 	    break;
 	case ACCT_TYPE_STOP:
-	    acct_type = "stop"; 
+	    acct_type = "stop";
 	    break;
 	default:
-	    acct_type = "default"; 
+	    acct_type = "default";
     }
 
     for (i = 0; i < rec->num_args; i++) {
@@ -183,14 +184,14 @@ do_acct_syslog(struct acct_rec *rec)
 	}
     }
 
-    syslog(LOG_INFO, "%s    %s    %s    %s    %s    %s", 
-	   ((rec->identity->NAS_name) && rec->identity->NAS_name[0]) ? 
+    syslog(LOG_INFO, "%s    %s    %s    %s    %s    %s",
+	   ((rec->identity->NAS_name) && rec->identity->NAS_name[0]) ?
 	    rec->identity->NAS_name : "unknown",
-	   ((rec->identity->username) && rec->identity->username[0]) ? 
+	   ((rec->identity->username) && rec->identity->username[0]) ?
 	    rec->identity->username : "unknown",
-	   ((rec->identity->NAS_port) && rec->identity->NAS_port[0]) ? 
+	   ((rec->identity->NAS_port) && rec->identity->NAS_port[0]) ?
 	    rec->identity->NAS_port : "unknown",
-	   ((rec->identity->NAC_address) && rec->identity->NAC_address[0]) ? 
+	   ((rec->identity->NAC_address) && rec->identity->NAC_address[0]) ?
 	    rec->identity->NAC_address : "unknown",
 	   acct_type, cmdbuf);
 

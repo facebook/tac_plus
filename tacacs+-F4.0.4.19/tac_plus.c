@@ -20,8 +20,11 @@
  * IS'' AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
  * WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
  * FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * Facebook Fork 2014 Cooper Lees <cooper@fb.com>
 */
 
+#include "pathsl.h"
 #include "version.h"
 #include "tac_plus.h"
 #include <netinet/tcp.h>
@@ -195,10 +198,8 @@ get_socket(int **sa, int *nsa)
 	if (1 || debug & DEBUG_PACKET_FLAG)
 	    report(LOG_DEBUG, "socket FD %d AF %d", s, rp->ai_family);
 	flag = 1;
-#ifdef IPV6_V6ONLY
 	if (rp->ai_family == AF_INET6)
 	    setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &flag, sizeof(flag));
-#endif
 #ifdef SO_REUSEADDR
 	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *)&flag,
 		       sizeof(flag)) < 0)
@@ -250,7 +251,6 @@ get_socket(int **sa, int *nsa)
 	report(LOG_ERR, "get_socket: could not bind a listening socket");
 	tac_exit(1);
     }
-
     return(0);
 }
 
@@ -286,14 +286,13 @@ main(int argc, char **argv)
     memset(&session, 0, sizeof(session));
     session.peer = tac_strdup("unknown");
 
-    open_logfile();
 
     if (argc <= 1) {
 	usage();
 	tac_exit(1);
     }
 
-    while ((c = getopt(argc, argv, "B:C:d:hiPp:tGgvSsLl:w:u:")) != EOF)
+    while ((c = getopt(argc, argv, "B:C:d:hiPp:tGgvSsLw:u:")) != EOF)
 	switch (c) {
 	case 'B':		/* bind() address*/
 	    bind_address = optarg;
@@ -335,9 +334,6 @@ main(int argc, char **argv)
 	case 'i':		/* inetd mode */
 	    standalone = 0;
 	    break;
-	case 'l':		/* logfile */
-	    logfile = tac_strdup(optarg);
-	    break;
 	case 'S':		/* enable single-connection */
 	    opt_S = 1;
 	    break;
@@ -361,6 +357,8 @@ main(int argc, char **argv)
     /* read the configuration/etc */
     init();
 
+    open_logfile();
+
     signal(SIGUSR1, handler);
     signal(SIGHUP, handler);
     signal(SIGTERM, die);
@@ -376,7 +374,7 @@ main(int argc, char **argv)
 	/* running under inetd */
 	char host[NI_MAXHOST];
 	int on;
-	struct sockaddr_in name;
+	struct sockaddr_in6 name;
 	socklen_t name_len;
 
 	name_len = sizeof(name);
@@ -390,20 +388,17 @@ main(int argc, char **argv)
 		on = 0;
 	    else
 		on = NI_NUMERICHOST;
-	    if (getnameinfo((struct sockaddr *)&name, name_len, host, 128,
+	    if (getnameinfo((struct sockaddr6 *)&name, name_len, host, 128,
 			    NULL, 0, on)) {
 		strncpy(host, "unknown", NI_MAXHOST - 1);
 		host[NI_MAXHOST - 1] = '\0';
 	    }
-	    if (session.peer) {
-		free(session.peer);
-	    }
+	    if (session.peer) free(session.peer);
 	    session.peer = tac_strdup(host);
 
-	    if (session.peerip)
-		free(session.peerip);
-	    session.peerip = tac_strdup((char *)inet_ntop(name.sin_family,
-					&name.sin_addr, host, name_len));
+	    if (session.peerip) free(session.peerip);
+	    session.peerip = tac_strdup((char *)inet_ntop(name.sin6_family,
+					&name.sin6_addr, host, name_len));
 	    if (debug & DEBUG_AUTHEN_FLAG)
 		report(LOG_INFO, "session.peerip is %s", session.peerip);
 	}
@@ -416,7 +411,7 @@ main(int argc, char **argv)
 #endif
 	start_session();
 	tac_exit(0);
-    }
+ }
 
     if (single) {
 	session.flags |= SESS_NO_SINGLECONN;
@@ -586,7 +581,7 @@ main(int argc, char **argv)
 	int pid;
 #endif
 	char host[NI_MAXHOST];
-	struct sockaddr_in from;
+	struct sockaddr_in6 from;
 	socklen_t from_len;
 	int newsockfd, status;
 	int flags;
@@ -605,7 +600,7 @@ main(int argc, char **argv)
 	from_len = sizeof(from);
 	for (c = 0; c < ns; c++) {
 	    if (pfds[c].revents & POLLIN)
-		newsockfd = accept(s[c], (struct sockaddr *)&from, &from_len);
+		newsockfd = accept(s[c], (struct sockaddr6 *)&from, &from_len);
 	    else if (pfds[c].revents & (POLLERR | POLLHUP | POLLNVAL)) {
 		report(LOG_ERR, "exception on listen FD %d", s[c]);
 		tac_exit(1);
@@ -624,7 +619,7 @@ main(int argc, char **argv)
 	    flags = 0;
 	else
 	    flags = NI_NUMERICHOST;
-	if (getnameinfo((struct sockaddr *)&from, from_len, host, 128, NULL, 0,
+	if (getnameinfo((struct sockaddr6 *)&from, from_len, host, 128, NULL, 0,
 			flags)) {
 	    strncpy(host, "unknown", NI_MAXHOST - 1);
 	    host[NI_MAXHOST - 1] = '\0';
@@ -637,15 +632,15 @@ main(int argc, char **argv)
 
 	if (session.peerip)
 	    free(session.peerip);
-	session.peerip = tac_strdup((char *)inet_ntop(from.sin_family,
-				    &from.sin_addr, host, from_len));
+
+	session.peerip = tac_strdup((char *)inet_ntop(from.sin6_family,
+          &from.sin6_addr, host, INET6_ADDRSTRLEN));
 	if (debug & DEBUG_PACKET_FLAG)
 	    report(LOG_DEBUG, "session request from %s sock=%d",
 		   session.peer, newsockfd);
 
 	if (!single) {
 	    pid = fork();
-
 	    if (pid < 0) {
 		report(LOG_ERR, "fork error");
 		tac_exit(1);
@@ -653,37 +648,36 @@ main(int argc, char **argv)
 	} else {
 	    pid = 0;
 	}
-
 	if (pid == 0) {
 	  /* child */
-    printf("--> In child ...\n"); // C
 	  if (!single) {
-        for (c = 0; c < ns; c++)
-            close(s[c]);
-    }
-	    session.sock = newsockfd;
+            if (ns > 1) {
+              for (c = 0; c < ns; c++) {
+                close(s[c]);
+              }
+            }
+          }
+	  session.sock = newsockfd;
 #ifdef LIBWRAP
-	    if (! hosts_ctl(progname,session.peer,session.peerip,progname)) {
-		report(LOG_ALERT, "refused connection from %s [%s]",
+	  if (! hosts_ctl(progname,session.peer,session.peerip,progname)) {
+		  report(LOG_ALERT, "refused connection from %s [%s]",
 		       session.peer, session.peerip);
-		shutdown(session.sock, 2);
-		close(session.sock);
-		if (!single) {
-		    tac_exit(0);
-		} else {
-		    close(session.sock);
-		    continue;
-		}
-	    }
-	    if (debug)
-	      report(LOG_DEBUG, "connect from %s [%s]", session.peer,
-		   session.peerip);
+      shutdown(session.sock, 2);
+      close(session.sock);
+      if (!single) {
+          tac_exit(0);
+      } else {
+          close(session.sock);
+          continue;
+      }
+    }
+    if (debug)
+      report(LOG_DEBUG, "connect from %s [%s]", session.peer, session.peerip);
 #endif
 #if PROFILE
 	    moncontrol(1);
 #endif
 
-      printf("--> Start Session\n"); // C
 	    start_session();
 	    shutdown(session.sock, 2);
 	    close(session.sock);
@@ -802,7 +796,6 @@ usage(void)
     fprintf(stderr, "Usage: tac_plus -C <config_file> [-GghiLPstv]"
 		" [-B <bind address>]"
 		" [-d <debug level>]"
-		" [-l <logfile>]"
 		" [-p <port>]"
 		" [-u <wtmpfile>]"
 #ifdef MAXSESS

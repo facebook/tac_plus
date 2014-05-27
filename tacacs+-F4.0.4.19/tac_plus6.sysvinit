@@ -1,20 +1,20 @@
 #!/bin/bash
 #
-# /etc/rc.d/init.d/tac_plus
+# /etc/rc.d/init.d/tac_plus6
 #
 # chkconfig: 2345 86 14
-# description: TACACS+ v4 Daemon
+# description: TACACS+ v6 Daemon
 
 # Define variables
-TACPLUS_BIN=/usr/bin/tac_plus
-TACPLUS_OPTS="-B 0.0.0.0"
+TACPLUS_BIN=/usr/bin/tac_plus6
+TACPLUS_OPTS="-B ::" 
 TACPLUS_CONF=/etc/tac_plus.conf
 
 # Source function library.
 . /etc/rc.d/init.d/functions
 
 RETVAL=0
-prog="tac_plus"
+prog="tac_plus6"
 
 case "$1" in
   start)
