@@ -70,13 +70,16 @@ tac_exit(int status)
 char *
 tac_strdup(char *p)
 {
-    char *n = strdup(p);
+    if (p != NULL) {
+      char *n = strdup(p);
 
-    if (n == NULL) {
-	report(LOG_ERR, "strdup allocation failure");
-	tac_exit(1);
+      if (n == NULL) {
+        report(LOG_ERR, "strdup allocation failure");
+        tac_exit(1);
+      }
+      return(n);
     }
-    return(n);
+    return(NULL);
 }
 
 char *

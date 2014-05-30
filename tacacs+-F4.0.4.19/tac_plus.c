@@ -625,14 +625,10 @@ main(int argc, char **argv)
 	    host[NI_MAXHOST - 1] = '\0';
 	}
 
-	if (session.peer) {
-	    free(session.peer);
-	}
+	if (session.peer) free(session.peer);
 	session.peer = tac_strdup(host);
 
-	if (session.peerip)
-	    free(session.peerip);
-
+	if (session.peerip) free(session.peerip);
 	session.peerip = tac_strdup((char *)inet_ntop(from.sin6_family,
           &from.sin6_addr, host, INET6_ADDRSTRLEN));
 	if (debug & DEBUG_PACKET_FLAG)
