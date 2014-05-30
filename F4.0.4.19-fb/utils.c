@@ -79,6 +79,7 @@ tac_strdup(char *p)
       }
       return(n);
     }
+    report(LOG_ERR, "tac_strdup passed char* is NULL");
     return(NULL);
 }
 

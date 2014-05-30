@@ -394,3 +394,9 @@ F4.0.4.19
 	- add authorization script example - from Daniel Schmidt
 	- add partial support for single-connection mode
 	- convert select()s to poll()s
+F4.04.19-fb - aka fb-tac_plus 1.0
+  - IPv6 Socket + ensure seperate .acct + PID files be used
+  - Use AF_INET6 supported functions
+  - Fix some seg faults + other bugs
+  - Add PAM patch
+  - Add appropriate logging to go to syslog re: auth success and fail
