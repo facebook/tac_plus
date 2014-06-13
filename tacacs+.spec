@@ -1,12 +1,12 @@
 Summary: TACACS+ Daemon
 Name: tacacs+
 Group: Networking/Servers
-Version: F4.0.4.19
+Version: FB4.0.4.19.1
 Release: 7fb
 License: Cisco
 
 Packager: Cooper Lees <cooper@fb.com>
-Vendor: Shrubbery Networks
+Vendor: Facebook Inc.
 
 Source: %{name}-%{version}.tar.gz
 
@@ -22,6 +22,7 @@ IPv4 Tacacs+ Daemon for Linux
 %setup
 
 %build
+export CFLAGS="-DHAVE_PAM"
 %configure --enable-acls --enable-uenable
 %{__make}
 

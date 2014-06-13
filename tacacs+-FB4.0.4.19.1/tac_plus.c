@@ -374,22 +374,36 @@ main(int argc, char **argv)
 	/* running under inetd */
 	char host[NI_MAXHOST];
 	int on;
+#ifdef IPV6
 	struct sockaddr_in6 name;
+#else
+  struct sockaddr_in name;
+#endif
 	socklen_t name_len;
 
 	name_len = sizeof(name);
 	session.flags |= SESS_NO_SINGLECONN;
 
 	session.sock = 0;
+#ifdef IPV6
+	if (getpeername(session.sock, (struct sockaddr6 *)&name, &name_len)) {
+	    report(LOG_ERR, "getpeername failure %s", strerror(errno));
+#else
 	if (getpeername(session.sock, (struct sockaddr *)&name, &name_len)) {
 	    report(LOG_ERR, "getpeername failure %s", strerror(errno));
+#endif
 	} else {
 	    if (lookup_peer)
 		on = 0;
 	    else
 		on = NI_NUMERICHOST;
+#ifdef IPV6
 	    if (getnameinfo((struct sockaddr6 *)&name, name_len, host, 128,
 			    NULL, 0, on)) {
+#else
+	    if (getnameinfo((struct sockaddr *)&name, name_len, host, 128,
+			    NULL, 0, on)) {
+#endif
 		strncpy(host, "unknown", NI_MAXHOST - 1);
 		host[NI_MAXHOST - 1] = '\0';
 	    }
@@ -397,8 +411,13 @@ main(int argc, char **argv)
 	    session.peer = tac_strdup(host);
 
 	    if (session.peerip) free(session.peerip);
+#ifdef IPV6
 	    session.peerip = tac_strdup((char *)inet_ntop(name.sin6_family,
 					&name.sin6_addr, host, name_len));
+#else
+	    session.peerip = tac_strdup((char *)inet_ntop(name.sin_family,
+					&name.sin_addr, host, name_len));
+#endif
 	    if (debug & DEBUG_AUTHEN_FLAG)
 		report(LOG_INFO, "session.peerip is %s", session.peerip);
 	}
@@ -581,7 +600,11 @@ main(int argc, char **argv)
 	int pid;
 #endif
 	char host[NI_MAXHOST];
+#ifdef IPV6
 	struct sockaddr_in6 from;
+#else
+	struct sockaddr_in from;
+#endif
 	socklen_t from_len;
 	int newsockfd, status;
 	int flags;
@@ -596,11 +619,15 @@ main(int argc, char **argv)
 	    if (errno == EINTR)
 		continue;
 
-	memset((char *)&from, 0, sizeof(from));
 	from_len = sizeof(from);
+	memset((char *)&from, 0, from_len);
 	for (c = 0; c < ns; c++) {
 	    if (pfds[c].revents & POLLIN)
-		newsockfd = accept(s[c], (struct sockaddr6 *)&from, &from_len);
+  #ifdef IPV6
+		newsockfd = accept(s[c], (struct sockaddr_in6 *)&from, &from_len);
+  #else
+		newsockfd = accept(s[c], (struct sockaddr_in *)&from, &from_len);
+  #endif
 	    else if (pfds[c].revents & (POLLERR | POLLHUP | POLLNVAL)) {
 		report(LOG_ERR, "exception on listen FD %d", s[c]);
 		tac_exit(1);
@@ -619,8 +646,13 @@ main(int argc, char **argv)
 	    flags = 0;
 	else
 	    flags = NI_NUMERICHOST;
-	if (getnameinfo((struct sockaddr6 *)&from, from_len, host, 128, NULL, 0,
+#ifdef IPV6
+	if (getnameinfo((struct sockaddr_in6 *)&from, from_len, host, 128, NULL, 0,
 			flags)) {
+#else
+	if (getnameinfo((struct sockaddr_in *)&from, from_len, host, 128, NULL, 0,
+			flags)) {
+#endif
 	    strncpy(host, "unknown", NI_MAXHOST - 1);
 	    host[NI_MAXHOST - 1] = '\0';
 	}
@@ -629,8 +661,13 @@ main(int argc, char **argv)
 	session.peer = tac_strdup(host);
 
 	if (session.peerip) free(session.peerip);
+#ifdef IPV6
 	session.peerip = tac_strdup((char *)inet_ntop(from.sin6_family,
           &from.sin6_addr, host, INET6_ADDRSTRLEN));
+#else
+	session.peerip = tac_strdup((char *)inet_ntop(from.sin_family,
+          &from.sin_addr, host, INET_ADDRSTRLEN));
+#endif
 	if (debug & DEBUG_PACKET_FLAG)
 	    report(LOG_DEBUG, "session request from %s sock=%d",
 		   session.peer, newsockfd);
