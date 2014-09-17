@@ -52,13 +52,11 @@ export CFLAGS="-DHAVE_PAM"
 /usr/share/man/man8/tac_pwd.8.gz
 /usr/share/man/man8/tac_plus.8.gz
 /usr/share/man/man3/regexp.3.gz
-/usr/share/tacacs+/do_auth.pyc
-/usr/share/tacacs+/do_auth.pyo
-/usr/lib64/libtacacs.so.1.0.0
-/usr/lib64/libtacacs.so.1
-/usr/lib64/libtacacs.so
-/usr/lib64/libtacacs.a
-/usr/lib64/libtacacs.la
+%{_libdir}/libtacacs.so.1.0.0
+%{_libdir}/libtacacs.so.1
+%{_libdir}/libtacacs.so
+%{_libdir}/libtacacs.a
+%{_libdir}/libtacacs.la
 /etc/rc.d/init.d/tac_plus
 
 %changelog
