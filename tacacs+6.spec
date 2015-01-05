@@ -20,6 +20,8 @@ Requires: pam, tcp_wrappers, tacacs+
 %description
 IPv6 Tacacs+ Daemon for Linux
 
+%debug_package
+
 %prep
 umask 022
 %{__rm} -rf %{_tmppath}/tacacs+-%{version}-%{release}-root/*
@@ -37,6 +39,7 @@ cd tacacs+-%{version}
 %{__make}
 
 %install
+export DONT_STRIP=1
 %{__rm} -rf %{buildroot}
 cd tacacs+-%{version}
 %makeinstall
