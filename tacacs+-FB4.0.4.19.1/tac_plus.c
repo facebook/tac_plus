@@ -624,9 +624,9 @@ main(int argc, char **argv)
 	for (c = 0; c < ns; c++) {
 	    if (pfds[c].revents & POLLIN)
   #ifdef IPV6
-		newsockfd = accept(s[c], (struct sockaddr_in6 *)&from, &from_len);
+		newsockfd = accept(s[c], (struct sockaddr6 *)&from, &from_len);
   #else
-		newsockfd = accept(s[c], (struct sockaddr_in *)&from, &from_len);
+		newsockfd = accept(s[c], (struct sockaddr *)&from, &from_len);
   #endif
 	    else if (pfds[c].revents & (POLLERR | POLLHUP | POLLNVAL)) {
 		report(LOG_ERR, "exception on listen FD %d", s[c]);

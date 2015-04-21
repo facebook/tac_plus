@@ -27,6 +27,7 @@ export CFLAGS="-DHAVE_PAM"
 %{__make}
 
 %install
+export DONT_STRIP=1
 %{__rm} -rf %{buildroot}
 %makeinstall
 %{__install} -Dp -m0755 tac_plus.sysvinit %{buildroot}%{_initrddir}/tac_plus
@@ -48,6 +49,8 @@ export CFLAGS="-DHAVE_PAM"
 /usr/share/tacacs+/users_guide
 /usr/share/tacacs+/tac_convert
 /usr/share/tacacs+/do_auth.py
+/usr/share/tacacs+/do_auth.pyc
+/usr/share/tacacs+/do_auth.pyo
 /usr/share/man/man5/tac_plus.conf.5.gz
 /usr/share/man/man8/tac_pwd.8.gz
 /usr/share/man/man8/tac_plus.8.gz

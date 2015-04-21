@@ -6,12 +6,17 @@
 # description: TACACS+ v6 Daemon
 
 # Define variables
+CORE_DUMP=1  # Lets always coredump
 TACPLUS_BIN=/usr/bin/tac_plus6
 TACPLUS_OPTS="-B ::" 
 TACPLUS_CONF=/etc/tac_plus.conf
 
 # Source function library.
 . /etc/rc.d/init.d/functions
+
+if [ $CORE_DUMP -ne 0 ]; then
+  ulimit -c unlimited
+fi
 
 RETVAL=0
 prog="tac_plus6"
