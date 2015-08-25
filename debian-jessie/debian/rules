@@ -1,0 +1,6 @@
+#!/usr/bin/make -f
+export DEB_CFLAGS_MAINT_APPEND = -DIPV6 -DHAVE_PAM
+%:
+	dh $@
+override_dh_auto_configure:
+	dh_auto_configure -- --enable-acls --enable-uenable
