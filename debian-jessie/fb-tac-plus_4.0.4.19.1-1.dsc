@@ -10,10 +10,10 @@ Package-List:
  fb-tac-plus deb net optional arch=any
 Checksums-Sha1:
  b49c51e746fc91857d0eda436a11e53b8fa63ef6 676519 fb-tac-plus_4.0.4.19.1.orig.tar.gz
- 109596387f29c7057af6e8605dd2af2c2644ca73 4164 fb-tac-plus_4.0.4.19.1-1.debian.tar.xz
+ 1d05591ec6ab06064a50359ea2fc15cfc55b1441 4412 fb-tac-plus_4.0.4.19.1-1.debian.tar.xz
 Checksums-Sha256:
  2884bda4579a6ecd82b200ae1737098e5dacef12c6826c2704d92709902cc629 676519 fb-tac-plus_4.0.4.19.1.orig.tar.gz
- a1b9b2ae118226d62381afbb5ae3983658e663b5cbb4041b5b8d0de0594f0535 4164 fb-tac-plus_4.0.4.19.1-1.debian.tar.xz
+ a6ab911601c287a5f2bb19834cb3212fc04c80901abdcca141459a9be4f2dda0 4412 fb-tac-plus_4.0.4.19.1-1.debian.tar.xz
 Files:
  9c8f251ca797b50983f4fb07205f06b3 676519 fb-tac-plus_4.0.4.19.1.orig.tar.gz
- 80743ab88539e32e458e7a60c65f9533 4164 fb-tac-plus_4.0.4.19.1-1.debian.tar.xz
+ 2f90c44493ff6a2df4540e0ef39409a8 4412 fb-tac-plus_4.0.4.19.1-1.debian.tar.xz

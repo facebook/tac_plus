@@ -16,8 +16,7 @@ NAME="fb-tac-plus"
 DESC="TACACS+ authentication daemon"              
 LOGDIR=/var/log/
 STARTTIME=1
-
-PIDFILE=/var/run/tac_plus.pid
+PIDFILEBASE=/var/run/tac_plus.pid
 
 test -x $DAEMON || exit 0
 
@@ -27,15 +26,25 @@ test -x $DAEMON || exit 0
 # at /etc/default/$NAME
 DAEMON_OPTS="-d 16"          # Additional options given to the server
 CONFIG_FILE="/etc/tac_plus.conf"
-                        
 LOGFILE=$LOGDIR/tac_plus.log  # Server logfile
 
 # Include defaults if available
 if [ -f /etc/default/$NAME ] ; then
 	. /etc/default/$NAME
 fi
-
 DAEMON_ARGS="$DAEMON_OPTS -C $CONFIG_FILE"
+# we need to parse the options that were handed to the daemon to check
+# what the pidfile(s) should be called - the PID is set based on the
+# last -B argument
+# we also need to give awk access to this variable - hence the export.
+export DAEMON_OPTS
+PIDEXT=`/usr/bin/awk 'BEGIN { split(ENVIRON["DAEMON_OPTS"], array, " "); for (i=1;i in array;i++) { if(array[i] == "-B"){ current=array[i+1]; }  } print current; }'`
+
+if [ "$PIDEXT" = "" ]; then
+	PIDFILE=$PIDFILEBASE
+else
+	PIDFILE=$PIDFILEBASE.$PIDEXT
+fi
 
 # Check that the user exists (if we set a user)
 # Does the user exist?
@@ -79,7 +88,7 @@ running() {
 start_server() {
 # Start the process using the wrapper
     if check_config_quiet ; then
-         start-stop-daemon --start --quiet --pidfile $PIDFILE \
+         start-stop-daemon --start --quiet -m --pidfile $PIDFILE \
                 --exec $DAEMON -- $DAEMON_ARGS
          errcode=$?
          return $errcode

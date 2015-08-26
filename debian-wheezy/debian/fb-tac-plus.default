@@ -2,4 +2,4 @@
 # /etc/init.d/fb-tac-plus
 
 CONFIG_FILE=/etc/tac_plus.conf
-DAEMON_OPTS="-d 16 -L"
+DAEMON_OPTS="-d 16 -L -B 0.0.0.0 -B ::"
