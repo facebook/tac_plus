@@ -85,7 +85,7 @@ running() {
        else
         pid=`cat $PIDFILEBASE`
         running_pid $pid $DAEMON
-        if [ "$?" != "0"]; then
+        if [ "$?" != "0" ]; then
          NOT_RUNNING=1
         fi
       fi
