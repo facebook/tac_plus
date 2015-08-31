@@ -1,5 +1,11 @@
-fb-tac-plus (4.0.4.19.1-1) UNRELEASED; urgency=medium
+fb-tac-plus (4.0.4.19.1-2) UNRELEASED; urgency=medium
 
+  [ Rob Shakir ]
   * Initial package of facebook's force of the tac_plus server.
 
- -- Rob Shakir <rjs@jive.net>  Mon, 24 Aug 2015 22:46:11 +0100
+  [ rjs ]
+  * Fixed the initscripts for cases where multiple bind addresses
+    are required. 
+  * Updated location of config file
+
+ -- rjs <rjs@pkghost0.rjs.jiveip.net>  Mon, 31 Aug 2015 16:36:03 +0100

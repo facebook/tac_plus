@@ -7,7 +7,7 @@ Build-Depends: libaudit0 (>= 1:1.7.18-1.1), libaudit-dev (>= 1:1.7.18-1.1), debh
 
 Package: fb-tac-plus
 Architecture: any
-Version: 4.0.4.19.1-1
+Version: 4.0.4.19.1-2
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: TACACS+ daemon for authentication.
  Packaged from the facebook fork found at

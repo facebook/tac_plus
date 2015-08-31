@@ -1,5 +1,13 @@
 # Default settings for tac_plus. This file is sourced by /bin/sh from
 # /etc/init.d/fb-tac-plus
 
-CONFIG_FILE=/etc/tac_plus.conf
-DAEMON_OPTS="-d 16 -L -B 0.0.0.0 -B ::"
+CONFIG_FILE=/etc/tac_plus/tac_plus.conf
+
+# Non-config file or bind address related cmdline
+# switches that are required.
+DAEMON_OPTS=""
+
+# A space separated list of the addresses that the
+# daemon should bind to - this launches multiple
+# copies of tac_plus
+BIND_ADDRESSES="0.0.0.0 ::"
