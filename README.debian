@@ -1,0 +1,22 @@
+This repository contains the relevant files to build .deb
+files for the facebook fork of the tac_plus server. Build
+files are included for both Debian 7 (Wheezy) and Debian 8
+(Jessie).
+
+Right now, only amd64 binaries are generated.
+
+To build:
+	- mv tacacs+-FB4.0.4.19.1 fb-tac-plus_4.0.4.19.1
+	- cp -R debian-{selected-version} tacacs+-FB4.0.4.19.1/debian
+	- cd fb-tac-plus_4.0.4.19.1
+	- dpkg-buildpackage -rfakeroot -uc -b
+To install:
+	- cd ..
+	- dpkg -i fb-tac-plus_4.0.4.19.1-1_amd64.deb
+
+The package name is fb-tac-plus, config is stored in /etc/tac_plus.conf
+(where a default config that YOU SHOULD DEFINITELY CHANGE exists). The
+initscripts are /etc/init.d/fb-tac-plus.
+
+Enjoy, and thanks to the facebook guys for the changes that they made
+here :-)

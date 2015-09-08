@@ -1,0 +1,52 @@
+Description: Add a default configuration file for tac_plus.
+ Default configuration file for tac_plus which is added to
+ /etc/tac_plus.conf
+ .
+ fb-tac-plus (4.0.4.19.1-1) UNRELEASED; urgency=medium
+ .
+   * Initial package of facebook's force of the tac_plus server.
+Author: Rob Shakir <rjs@jive.net>
+
+--- /dev/null
++++ fb-tac-plus-4.0.4.19.1/tac_plus.conf
+@@ -0,0 +1,40 @@
++#
++# An example tac_plus configuration. You should change this 
++# before using it.
++#
++
++# The key that is used by remote systems using this TACACS+
++# server.
++key="aVerySecretKey"
++
++# Where should accounting logs be stored?
++accounting file = /var/log/tac_acct.log
++
++# A locally defined user
++user = testuser {
++	login = cleartext "notVerySecure"
++	member = neteng
++}
++
++user = $enable$ {
++	login = cleartext "evenLessSecure"
++}
++
++# An example of a user group, this group can only run
++# 'show' commands that match 'show ip' or 'interface'
++group = show_users {
++	default service = deny
++	login = cleartext "showMeTheNetwork"
++	cmd = exit {
++		permit .*
++	}
++	cmd = show {
++		permit ip
++		permit interface
++		deny .*
++	}
++}
++
++group = neteng {
++	default service = permit
++}
