@@ -16,6 +16,7 @@ TACPLUS_CONF=/etc/tac_plus.conf
 
 if [ $CORE_DUMP -ne 0 ]; then
   ulimit -c unlimited
+  export DAEMON_COREFILE_LIMIT='unlimited'
 fi
 
 RETVAL=0
