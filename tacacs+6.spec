@@ -2,10 +2,10 @@ Summary: TACACS+ Daemon
 Name: tacacs+6
 Group: Networking/Servers
 Version: FB4.0.4.19.1
-Release: 7fb
+Release: 8fb
 License: Cisco
 
-Packager: Cooper Lees <cooper@fb.com>
+Packager: David Rothera <drothera@fb.com>
 Vendor: Facebook Inc.
 
 Source: tacacs+-%{version}.tar.gz
