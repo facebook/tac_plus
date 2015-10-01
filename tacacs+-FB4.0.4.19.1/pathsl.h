@@ -1,3 +1,6 @@
+#ifndef PATHSL_H
+#define PATHSL_H
+
 /* daemon pid file location */
 #define TACPLUS_PIDFILE		"/var/run/tac_plus.pid"
 
@@ -9,3 +12,5 @@
 
 /* This is a shared file used to maintain a record of who is logged in */
 #define TACPLUS_WHOLOGFILE	"/var/log/tacwho.log"
+
+#endif

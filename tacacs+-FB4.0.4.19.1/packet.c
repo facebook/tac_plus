@@ -95,7 +95,7 @@ read_packet(void)
 
     /* read a packet header */
     len = sockread(session.sock, (u_char *)&hdr,
-		   TAC_PLUS_HDR_SIZE, TAC_PLUS_READ_TIMEOUT);
+		   TAC_PLUS_HDR_SIZE, cfg_get_readtimeout());
     if (len != TAC_PLUS_HDR_SIZE) {
 	report(LOG_DEBUG, "Read %d bytes from %s %s, expecting %d",
 	       len, session.peer, session.port, TAC_PLUS_HDR_SIZE);
@@ -127,7 +127,7 @@ read_packet(void)
 
     /* read the rest of the packet data */
     if (sockread(session.sock, data, ntohl(hdr.datalength),
-		 TAC_PLUS_READ_TIMEOUT) != ntohl(hdr.datalength)) {
+		 cfg_get_readtimeout()) != ntohl(hdr.datalength)) {
 	report(LOG_ERR, "%s: start_session: bad socket read", session.peer);
 	free(pkt);
 	return(NULL);
@@ -419,7 +419,7 @@ sockread(int fd, u_char *ptr, int nbytes, int timeout)
 	int status = poll(&pfds, 1, timeout * 1000);
 
 	if (status == 0) {
-	    report(LOG_DEBUG, "%s: timeout reading fd %d", session.peer, fd);
+	    report(LOG_DEBUG, "%s: timeout reading fd %d (%d secs)", session.peer, fd, cfg_get_readtimeout());
 	    return(-1);
 	}
 	if (status < 0) {
@@ -554,7 +554,7 @@ write_packet(u_char *pak)
 	return(-1);
     }
 
-    if (sockwrite(session.sock, pak, len, TAC_PLUS_WRITE_TIMEOUT) != len) {
+    if (sockwrite(session.sock, pak, len, cfg_get_writetimeout()) != len) {
 	return(-1);
     }
     session.last_exch = time(NULL);

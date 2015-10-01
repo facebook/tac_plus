@@ -91,3 +91,8 @@
 #endif
 #define	S_syslog	50
 #define S_md5       51
+#define S_maxprocs 52
+#define S_maxprocsperclt 53
+#define S_readtimeout 54
+#define S_writetimeout 55
+#define S_accepttimeout 56

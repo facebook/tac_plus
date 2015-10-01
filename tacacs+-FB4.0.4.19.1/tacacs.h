@@ -28,9 +28,11 @@
 #define	TAC_PLUS_PORT			49
 #endif
 
-#define TAC_PLUS_READ_TIMEOUT		180	/* seconds */
-#define TAC_PLUS_WRITE_TIMEOUT		180	/* seconds */
-#define TAC_PLUS_ACCEPT_TIMEOUT		15	/* seconds */
+#define TAC_PLUS_READ_TIMEOUT		  180	/* seconds */
+#define TAC_PLUS_WRITE_TIMEOUT		180 /* seconds */
+#define TAC_PLUS_ACCEPT_TIMEOUT		180	/* seconds */
+#define TAC_MAX_PROCS            1024
+#define TAC_MAX_PROCS_PER_CLIENT   32
 
 /*
  * All tacacs+ packets have the same header format
@@ -290,7 +292,7 @@ extern struct timeval started_at;
 extern char *wtmpfile;
 extern int wtmpfd;
 
-#define HASH_TAB_SIZE 157        /* user and group hash table sizes */
+#define HASH_TAB_SIZE 65539        /* user and group hash table sizes */
 
 typedef struct tac_plus_pak_hdr HDR;
 

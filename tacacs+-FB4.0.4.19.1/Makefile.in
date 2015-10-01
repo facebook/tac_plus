@@ -97,7 +97,7 @@ am__tac_plus_SOURCES_DIST = acct.c authen.c author.c choose_authen.c \
 	config.c default_fn.c default_v0_fn.c do_acct.c do_author.c \
 	dump.c enable.c encrypt.c expire.c hash.c maxsess.c parse.c \
 	programs.c pw.c pwlib.c regexp.c report.c sendauth.c \
-	sendpass.c tac_plus.c utils.c skey_fn.c
+	sendpass.c tac_plus.c utils.c skey_fn.c client_count.c
 @TACSKEY_TRUE@am__objects_1 = skey_fn.$(OBJEXT)
 am_tac_plus_OBJECTS = acct.$(OBJEXT) authen.$(OBJEXT) author.$(OBJEXT) \
 	choose_authen.$(OBJEXT) config.$(OBJEXT) default_fn.$(OBJEXT) \
@@ -107,7 +107,7 @@ am_tac_plus_OBJECTS = acct.$(OBJEXT) authen.$(OBJEXT) author.$(OBJEXT) \
 	parse.$(OBJEXT) programs.$(OBJEXT) pw.$(OBJEXT) \
 	pwlib.$(OBJEXT) regexp.$(OBJEXT) report.$(OBJEXT) \
 	sendauth.$(OBJEXT) sendpass.$(OBJEXT) tac_plus.$(OBJEXT) \
-	utils.$(OBJEXT) $(am__objects_1)
+	utils.$(OBJEXT) client_count.$(OBJEXT) $(am__objects_1)
 tac_plus_OBJECTS = $(am_tac_plus_OBJECTS)
 am__DEPENDENCIES_1 =
 tac_plus_DEPENDENCIES = $(am__DEPENDENCIES_1)

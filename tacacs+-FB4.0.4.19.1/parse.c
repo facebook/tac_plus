@@ -119,6 +119,11 @@ parser_init(void)
     declare("PAM", S_pam);
 #endif
     declare("syslog", S_syslog);
+    declare("maxprocs", S_maxprocs);
+    declare("maxprocsperclt", S_maxprocsperclt);
+    declare("readtimeout", S_readtimeout);
+    declare("writetimeout", S_writetimeout);
+    declare("accepttimeout", S_accepttimeout);
 }
 
 /* Return a keyword code if a keyword is recognized. 0 otherwise */
@@ -262,5 +267,15 @@ codestring(int type)
 #endif
     case S_syslog:
 	return("syslog");
+    case S_maxprocs:
+  return("maxprocs");
+    case S_maxprocsperclt:
+  return("maxprocsperclt");
+    case S_readtimeout:
+  return("readtimeout");
+    case S_writetimeout:
+  return("writetimeout");
+    case S_accepttimeout:
+  return("accepttimeout");
     }
 }

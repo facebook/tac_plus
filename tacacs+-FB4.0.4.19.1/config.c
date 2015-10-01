@@ -36,7 +36,9 @@
 				accounting syslog |
 				default authorization = <permission> |
 				key = <string> |
-				logging = <syslog_fac>
+				logging = <syslog_fac> |
+        maxprocs = <maxprocs> |
+        maxprocsperclt = <maxprocsperclt>
 
    <authen_default>	:=	default authentication = file <filename>
 
@@ -118,6 +120,11 @@ static FILE *cf = NULL;				/* config file pointer */
 static int sym_error = 0;			/* a parsing error occurred */
 static int no_user_dflt = 0;		/* default if user doesn't exist */
 static char *authen_default = NULL;	/* top level authentication default */
+static long int maxprocs = TAC_MAX_PROCS;	/* max procs to fork */
+static long int maxprocsperclt = TAC_MAX_PROCS_PER_CLIENT;	/* max procs to fork per client */
+static long int readtimeout = TAC_PLUS_READ_TIMEOUT;
+static long int writetimeout = TAC_PLUS_WRITE_TIMEOUT;
+static long int accepttimeout = TAC_PLUS_ACCEPT_TIMEOUT;
 static char *nopasswd_str = "nopassword";
 
 /*
@@ -817,7 +824,67 @@ parse_decls()
 	    sym_get();
 	    continue;
 
-	case S_host:
+  case S_maxprocs:
+      parse(S_maxprocs);
+		  parse(S_separator);
+      errno = 0;
+      maxprocs = strtol(tac_strdup(sym_buf), NULL, 10);
+      if ((errno) || (maxprocs < 0)) {
+        parse_error("maxprocs must a valid positive integer");
+        return 1;
+      }
+      sym_get();
+      continue;
+
+  case S_maxprocsperclt:
+      parse(S_maxprocsperclt);
+      parse(S_separator);
+      errno = 0;
+      maxprocsperclt = strtol(tac_strdup(sym_buf), NULL, 10);
+      if ((errno) || (maxprocsperclt < 0)) {
+        parse_error("maxprocsperclt must a valid positive integer");
+        return 1;
+      }
+      sym_get();
+      continue;
+
+  case S_readtimeout:
+      parse(S_readtimeout);
+      parse(S_separator);
+      errno = 0;
+      readtimeout = strtol(tac_strdup(sym_buf), NULL, 10);
+      if ((errno) || (readtimeout < 0)) {
+        parse_error("readtimeout must a valid positive integer");
+        return 1;
+      }
+      sym_get();
+      continue;
+
+  case S_writetimeout:
+      parse(S_writetimeout);
+      parse(S_separator);
+      errno = 0;
+      writetimeout = strtol(tac_strdup(sym_buf), NULL, 10);
+      if ((errno) || (writetimeout < 0)) {
+        parse_error("writetimeout must a valid positive integer");
+        return 1;
+      }
+      sym_get();
+      continue;
+
+  case S_accepttimeout:
+      parse(S_accepttimeout);
+      parse(S_separator);
+      errno = 0;
+      accepttimeout = strtol(tac_strdup(sym_buf), NULL, 10);
+      if ((errno) || (accepttimeout < 0)) {
+        parse_error("accepttimeout must a valid positive integer");
+        return 1;
+      }
+      sym_get();
+      continue;
+
+  case S_host:
 	    parse_host();
 	    continue;
 
@@ -1116,14 +1183,14 @@ parse_user(void)
 		strcat(buf, sym_buf);
 		user->login = tac_strdup(buf);
 		break;
-        
+
         case S_md5:
         sprintf(buf, "%s ", sym_buf);
         sym_get();
         strcat(buf, sym_buf);
 		user->login = tac_strdup(buf);
         break;
-        
+
 	    default:
 		parse_error("expecting 'file', 'cleartext', 'nopassword', "
 #ifdef SKEY
@@ -1156,14 +1223,14 @@ parse_user(void)
 		strcat(buf, sym_buf);
 		user->pap = tac_strdup(buf);
 		break;
-		
+
 		case S_md5:
         sprintf(buf, "%s ", sym_buf);
         sym_get();
         strcat(buf, sym_buf);
 		user->login = tac_strdup(buf);
         break;
-        
+
 #ifdef HAVE_PAM
 	    case S_pam:
 	        user->pap = tac_strdup(sym_buf);
@@ -2143,7 +2210,7 @@ cfg_get_login_secret(char *user, int recurse)
     return(cfg_get_pvalue(user, TAC_IS_USER, S_login, recurse));
 }
 
-#ifdef UENABLE 
+#ifdef UENABLE
 /*
  * return value of the noenablepwd field.  If none, try groups the user is a
  * member of, and so on, recursively if recurse is non-zero.
@@ -2461,6 +2528,36 @@ char *
 cfg_get_authen_default(void)
 {
     return(authen_default);
+}
+
+int
+cfg_get_maxprocs(void)
+{
+    return(maxprocs);
+}
+
+int
+cfg_get_maxprocsperclt(void)
+{
+    return(maxprocsperclt);
+}
+
+int
+cfg_get_readtimeout(void)
+{
+    return(readtimeout);
+}
+
+int
+cfg_get_writetimeout(void)
+{
+    return(writetimeout);
+}
+
+int
+cfg_get_accepttimeout(void)
+{
+    return(accepttimeout);
 }
 
 /*

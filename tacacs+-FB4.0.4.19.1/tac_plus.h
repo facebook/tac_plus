@@ -310,7 +310,7 @@ extern struct timeval started_at;
 extern char *wtmpfile;
 extern int wtmpfd;
 
-#define HASH_TAB_SIZE 157        /* user and group hash table sizes */
+#define HASH_TAB_SIZE 65539        /* user and group hash table sizes */
 
 typedef struct tac_plus_pak_hdr HDR;
 
@@ -569,8 +569,23 @@ char *summarise_incoming_packet_type(u_char *);
 /* hash.c */
 struct entry;
 void *hash_add_entry(void **, struct entry *);
+void *hash_update_entry(void **, struct entry *);
+void *hash_delete_entry(void **, char *);
 void **hash_get_entries(void **);
 void *hash_lookup(void **, char *);
+
+/* client_count.c */
+void client_count_init(void);
+int get_client_count(char* client_ip);
+int increment_client_count(char*);
+int decrement_client_count(char*);
+int decrement_client_count_for_proc(pid_t);
+int increment_client_count_for_proc(pid_t, char *);
+void remove_client_entry(char*);
+void remove_proc_entry(char*);
+void create_proc_client_map(pid_t, char*);
+void delete_proc_client_map(pid_t);
+void dump_client_tables();
 
 /* config.c */
 #ifdef ACLS
@@ -677,6 +692,20 @@ struct peruser {
     char NAC_address[128];	/*  ...IP address of NAS */
 };
 #endif /* MAXSESS */
+
+struct client_st {
+    char *name;     /* host name */
+    void *hash;     /* hash table next pointer */
+    int con_count;  /* count of connections from this peer */
+};
+typedef struct client_st CLIENT;
+
+struct proc_st {
+    char *name;     /* host name */
+    void *hash;     /* hash table next pointer */
+    char *client_ip; /* client ipv4 or ipv6 address */
+};
+typedef struct proc_st PROC_CLIENT;
 
 /* tac_plus.c */
 void open_logfile(void);

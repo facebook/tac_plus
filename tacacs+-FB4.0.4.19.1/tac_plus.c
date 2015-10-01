@@ -59,15 +59,19 @@ int single;			/* single thread (for debugging) */
 int opt_G;			/* foreground */
 int opt_S;			/* enable single-connection */
 int wtmpfd;			/* for wtmp file logging */
+int total_child_count = 0;    /* count of child procs */
+volatile sig_atomic_t dump_client_table = 0;
+volatile sig_atomic_t reap_children= 0;
 char *wtmpfile = NULL;
 char *bind_address = NULL;
-
 struct timeval started_at;
 
 struct session session;     /* session data */
 
 #define	PIDSZ	75
 static char pidfilebuf[PIDSZ]; /* holds current name of the pidfile */
+#define MSGBUFSZ 1024
+static char msgbuf[MSGBUFSZ];
 
 static RETSIGTYPE die(int);
 static int get_socket(int **, int *);
@@ -130,31 +134,51 @@ handler(int signum)
 #endif
 }
 
+static RETSIGTYPE
+dump_clients_handler(int signum)
+{
+    dump_client_table = 1;
+#ifdef REARMSIGNAL
+    signal(SIGUSR2, dump_clients_handler);
+#endif
+}
+
+
 #if defined(REAPCHILD) && defined(REAPSIGIGN)
-static
 RETSIGTYPE
 reapchild(int notused)
 {
-#ifdef UNIONWAIT
-    union wait status;
-#else
-    int status;
-#endif
-#if HAVE_PID_T
-    pid_t pid;
-#else
-    int pid;
+  reap_children = 1;
+}
 #endif
 
-    for (;;) {
-	pid = wait3(&status, WNOHANG, 0);
-	if (pid <= 0)
+void
+reapchildren()
+{
+#ifdef UNIONWAIT
+  union wait status;
+#else
+  int status;
+#endif
+#if HAVE_PID_T
+  pid_t pid;
+#else
+  int pid;
+#endif
+  int procs_for_client;
+
+  for (;;) {
+	  pid = waitpid(-1, &status, WNOHANG);
+	  if (pid <= 0)
 	    return;
-	if (debug & DEBUG_FORK_FLAG)
-	    report(LOG_DEBUG, "%ld reaped", (long)pid);
-    }
+    snprintf(msgbuf, MSGBUFSZ, "Cleaning up session for pid %lu", pid);
+    report(LOG_DEBUG, msgbuf);
+    procs_for_client = decrement_client_count_for_proc(pid);
+    /* decrement the global child counter */
+    total_child_count--;
+  }
+  reap_children = 0;
 }
-#endif /* REAPCHILD */
 
 /*
  * Return a socket bound to an appropriate port number/address. Exits
@@ -356,11 +380,14 @@ main(int argc, char **argv)
 
     /* read the configuration/etc */
     init();
-
+#if defined(REAPCHILD) && defined(REAPSIGIGN)
+    client_count_init();
+#endif
     open_logfile();
 
     signal(SIGUSR1, handler);
     signal(SIGHUP, handler);
+    signal(SIGUSR2, dump_clients_handler);
     signal(SIGTERM, die);
     signal(SIGPIPE, SIG_IGN);
 
@@ -608,11 +635,23 @@ main(int argc, char **argv)
 	socklen_t from_len;
 	int newsockfd, status;
 	int flags;
+  int procs_for_client;
+
+#if defined(REAPCHILD) && defined(REAPSIGIGN)
+  if (reap_children)
+    reapchildren();
+#endif
 
 	if (reinitialize)
 	    init();
 
-	status = poll(pfds, ns, TAC_PLUS_ACCEPT_TIMEOUT * 1000);
+  if (dump_client_table) {
+    report(LOG_ALERT, "Dumping Client Tables");
+    dump_client_tables();
+    dump_client_table = 0;
+  }
+
+	status = poll(pfds, ns, cfg_get_accepttimeout() * 1000);
 	if (status == 0)
 	    continue;
 	if (status == -1)
@@ -673,10 +712,30 @@ main(int argc, char **argv)
 		   session.peer, newsockfd);
 
 	if (!single) {
+#if defined(REAPCHILD) && defined(REAPSIGIGN)
+      /* first we check the tocal process count to see if we are at the limit */
+      if (total_child_count >= cfg_get_maxprocs()) {
+        report(LOG_ALERT, "refused connection from %s [%s] at global max procs [%d]",
+          session.peer, session.peerip, total_child_count);
+        shutdown(newsockfd, 2);
+        close(newsockfd);
+        continue;
+      }
+      /* no we check the process count per client */
+      procs_for_client = get_client_count(session.peerip);
+      report(LOG_ALERT, "connection [%d] from %s [%s]", procs_for_client + 1, session.peer, session.peerip);
+      if (procs_for_client >= cfg_get_maxprocsperclt()) {
+        report(LOG_ALERT, "refused connection from %s [%s] at client max procs [%d]",
+          session.peer, session.peerip, procs_for_client);
+        shutdown(newsockfd, 2);
+        close(newsockfd);
+        continue;
+      }
+#endif
 	    pid = fork();
 	    if (pid < 0) {
-		report(LOG_ERR, "fork error");
-		tac_exit(1);
+		    report(LOG_ERR, "fork error");
+		    tac_exit(1);
 	    }
 	} else {
 	    pid = 0;
@@ -717,9 +776,14 @@ main(int argc, char **argv)
 	    if (!single)
 		    tac_exit(0);
 	} else {
-	    if (debug & DEBUG_FORK_FLAG)
-		report(LOG_DEBUG, "forked %ld", (long)pid);
 	    /* parent */
+#if defined(REAPCHILD) && defined(REAPSIGIGN)
+      total_child_count++;
+      procs_for_client = increment_client_count_for_proc(pid, session.peerip);
+      snprintf(msgbuf, MSGBUFSZ, "forked %lu for %s, procs %d, procs for client %d",
+            (long)pid, session.peerip, total_child_count, procs_for_client);
+		    report(LOG_DEBUG, msgbuf);
+#endif
 	    close(newsockfd);
 	}
     }
