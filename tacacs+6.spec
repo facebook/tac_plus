@@ -1,18 +1,18 @@
-Summary: TACACS+ Daemon
+Summary: TACACS+6 Daemon
 Name: tacacs+6
 Group: Networking/Servers
 Version: FB4.0.4.19.1
-Release: 8fb
+Release: 9fb
 License: Cisco
 
-Packager: David Rothera <drothera@fb.com>
+Packager: Cooper Lees <cooper@fb.com>
 Vendor: Facebook Inc.
 
 Source: tacacs+-%{version}.tar.gz
 
 BuildRoot: %{_tmppath}/tacacs+-%{version}-%{release}-root
 
-BuildRequires: gcc, bison, flex, m4, pam-devel, tcp_wrappers, tcp_wrappers-devel
+BuildRequires: gcc, bison, flex, m4, pam-devel, tcp_wrappers, tcp_wrappers-devel, systemd
 Requires: pam, tcp_wrappers, tacacs+
 
 %define _unpackaged_files_terminate_build 0
@@ -44,18 +44,25 @@ export DONT_STRIP=1
 cd tacacs+-%{version}
 %makeinstall
 %{__install} -Dp -m0755 tac_plus6.sysvinit %{buildroot}%{_initrddir}/tac_plus6
+%{__install} -Dp -m0644 tac_plus6.service %{buildroot}%{_unitdir}/tac_plus6.service
 ### Clean up buildroot
 %{__rm} -f %{buildroot}%{_infodir}/dir
 
 %post
+%systemd_post tac_plus6.service
 
 %preun
+%systemd_preun tac_plus6.service
+
+%postun
+%systemd_postun_with_restart tac_plus6.service
 
 %clean
 %{__rm} -rf %{buildroot}
 
 %files
 
+%{_unitdir}/tac_plus6.service
 /usr/bin/tac_pwd6
 /usr/bin/tac_plus6
 /etc/rc.d/init.d/tac_plus6

@@ -2,17 +2,17 @@ Summary: TACACS+ Daemon
 Name: tacacs+
 Group: Networking/Servers
 Version: FB4.0.4.19.1
-Release: 8fb
+Release: 9fb
 License: Cisco
 
-Packager: David Rothera <drothera@fb.com>
+Packager: Cooper Lees <cooper@fb.com>
 Vendor: Facebook Inc.
 
 Source: %{name}-%{version}.tar.gz
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
-BuildRequires: gcc, bison, flex, m4, pam-devel, tcp_wrappers, tcp_wrappers-devel
+BuildRequires: gcc, bison, flex, m4, pam-devel, tcp_wrappers, tcp_wrappers-devel, systemd
 Requires: pam, tcp_wrappers
 
 %description
@@ -31,18 +31,25 @@ export DONT_STRIP=1
 %{__rm} -rf %{buildroot}
 %makeinstall
 %{__install} -Dp -m0755 tac_plus.sysvinit %{buildroot}%{_initrddir}/tac_plus
+%{__install} -Dp -m0644 tac_plus.service %{buildroot}%{_unitdir}/tac_plus.service
 ### Clean up buildroot
 %{__rm} -f %{buildroot}%{_infodir}/dir
 
 %post
+%systemd_post tac_plus.service
 
 %preun
+%systemd_preun tac_plus.service
+
+%postun
+%systemd_postun_with_restart tac_plus.service
 
 %clean
 %{__rm} -rf %{buildroot}
 
 %files
 
+%{_unitdir}/tac_plus.service
 /usr/include/tacacs.h
 /usr/bin/tac_pwd
 /usr/bin/tac_plus
