@@ -1,0 +1,19 @@
+[Unit]
+Description=TACACS+ IPv4 Daemon
+After=network.target
+After=crond.service
+ConditionPathExists=/etc/tac_plus.conf
+
+[Service]
+LimitCORE=16G
+StandardOutput=null
+
+ExecStart=/usr/bin/tac_plus \
+  -C /etc/tac_plus.conf \
+  -B 0.0.0.0 \
+  -G
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
