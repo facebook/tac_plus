@@ -825,25 +825,6 @@ AC_CHECK_PROGS(TAR, gnutar gtar tar)
 AC_SUBST(INST_PROGS)
 INST_PROGS=$progs
 
-dnl locate perl 5
-AC_PROG_INSTALL
-AC_PATH_PROG(PERLV_PATH,perl5,no)
-if test $PERLV_PATH = no; then
-    unset ac_cv_path_PERLV_PATH
-    AC_PATH_PROG(PERLV_PATH,perl,no)
-    if test $PERLV_PATH = no; then
-        AC_MSG_ERROR([can't locate a suitable perl5.])
-        exit 1
-    else
-        $PERLV_PATH -e 'require 5;'
-        if test $? -ne 0 ; then
-           AC_MSG_ERROR([can't locate a suitable perl5.])
-           exit 1
-        fi
-    fi
-fi
-AC_SUBST(PERLV_PATH)
-
 AC_SUBST(CFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
