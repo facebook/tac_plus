@@ -39,6 +39,7 @@ or build an RPM
 - cd tac_plus
 - mkdir -p ~/rpmbuild/SOURCES
 - tar cvzf ~/rpmbuild/SOURCES/tacacs+-FB4.0.4.19.1.tar.gz tacacs+-FB4.0.4.19.1
+- echo '%_topdir %(echo $HOME)/rpmbuild' > ~/.rpmmacros
 - sudo yum install rpm-build redhat-rpm-config gcc bison flex m4 pam-devel tcp_wrappers tcp_wrappers-devel
 - rpmbuild -ba tacacs+.spec
 - rpmbuild -ba tacacs+6.spec
