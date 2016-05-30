@@ -13,7 +13,7 @@ Source: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
 BuildRequires: gcc, bison, flex, m4, pam-devel, tcp_wrappers, tcp_wrappers-devel, systemd
-Requires: pam, tcp_wrappers
+Requires: pam, tcp_wrappers, tcp_wrappers-devel, tcp_wrappers-libs
 
 %description
 IPv4 Tacacs+ Daemon for Linux

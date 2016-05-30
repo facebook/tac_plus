@@ -13,7 +13,7 @@ Source: tacacs+-%{version}.tar.gz
 BuildRoot: %{_tmppath}/tacacs+-%{version}-%{release}-root
 
 BuildRequires: gcc, bison, flex, m4, pam-devel, tcp_wrappers, tcp_wrappers-devel, systemd
-Requires: pam, tcp_wrappers, tacacs+
+Requires: pam, tcp_wrappers, tcp_wrappers-devel, tcp_wrappers-libs, tacacs+
 
 %define _unpackaged_files_terminate_build 0
 
