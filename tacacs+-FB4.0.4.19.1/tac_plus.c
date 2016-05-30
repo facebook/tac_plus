@@ -169,7 +169,7 @@ reapchildren()
 
   for (;;) {
 	  pid = waitpid(-1, &status, WNOHANG);
-	  if (pid <= 0)
+	  if (pid <= 1)
 	    return;
     snprintf(msgbuf, MSGBUFSZ, "Cleaning up session for pid %lu", pid);
     report(LOG_DEBUG, msgbuf);
@@ -412,25 +412,15 @@ main(int argc, char **argv)
 	session.flags |= SESS_NO_SINGLECONN;
 
 	session.sock = 0;
-#ifdef IPV6
-	if (getpeername(session.sock, (struct sockaddr6 *)&name, &name_len)) {
-	    report(LOG_ERR, "getpeername failure %s", strerror(errno));
-#else
 	if (getpeername(session.sock, (struct sockaddr *)&name, &name_len)) {
 	    report(LOG_ERR, "getpeername failure %s", strerror(errno));
-#endif
 	} else {
 	    if (lookup_peer)
 		on = 0;
 	    else
 		on = NI_NUMERICHOST;
-#ifdef IPV6
-	    if (getnameinfo((struct sockaddr6 *)&name, name_len, host, 128,
-			    NULL, 0, on)) {
-#else
 	    if (getnameinfo((struct sockaddr *)&name, name_len, host, 128,
 			    NULL, 0, on)) {
-#endif
 		strncpy(host, "unknown", NI_MAXHOST - 1);
 		host[NI_MAXHOST - 1] = '\0';
 	    }
@@ -663,7 +653,7 @@ main(int argc, char **argv)
 	for (c = 0; c < ns; c++) {
 	    if (pfds[c].revents & POLLIN)
   #ifdef IPV6
-		newsockfd = accept(s[c], (struct sockaddr6 *)&from, &from_len);
+		newsockfd = accept(s[c], (struct sockaddr *)&from, &from_len);
   #else
 		newsockfd = accept(s[c], (struct sockaddr *)&from, &from_len);
   #endif
@@ -685,13 +675,8 @@ main(int argc, char **argv)
 	    flags = 0;
 	else
 	    flags = NI_NUMERICHOST;
-#ifdef IPV6
-	if (getnameinfo((struct sockaddr_in6 *)&from, from_len, host, 128, NULL, 0,
+	if (getnameinfo((struct sockaddr *)&from, from_len, host, 128, NULL, 0,
 			flags)) {
-#else
-	if (getnameinfo((struct sockaddr_in *)&from, from_len, host, 128, NULL, 0,
-			flags)) {
-#endif
 	    strncpy(host, "unknown", NI_MAXHOST - 1);
 	    host[NI_MAXHOST - 1] = '\0';
 	}
@@ -721,15 +706,18 @@ main(int argc, char **argv)
         close(newsockfd);
         continue;
       }
-      /* no we check the process count per client */
-      procs_for_client = get_client_count(session.peerip);
-      report(LOG_ALERT, "connection [%d] from %s [%s]", procs_for_client + 1, session.peer, session.peerip);
-      if (procs_for_client >= cfg_get_maxprocsperclt()) {
-        report(LOG_ALERT, "refused connection from %s [%s] at client max procs [%d]",
-          session.peer, session.peerip, procs_for_client);
-        shutdown(newsockfd, 2);
-        close(newsockfd);
-        continue;
+      if (session.peerip) {
+        /* now we check the process count per client */
+        procs_for_client = get_client_count(session.peerip);
+        report(LOG_ALERT, "connection [%d] from %s [%s]", procs_for_client + 1,
+            session.peer, session.peerip);
+        if (procs_for_client >= cfg_get_maxprocsperclt()) {
+          report(LOG_ALERT, "refused connection from %s [%s] at client max procs [%d]",
+            session.peer, session.peerip, procs_for_client);
+          shutdown(newsockfd, 2);
+          close(newsockfd);
+          continue;
+        }
       }
 #endif
 	    pid = fork();
