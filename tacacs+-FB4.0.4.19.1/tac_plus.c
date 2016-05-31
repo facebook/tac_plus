@@ -652,11 +652,7 @@ main(int argc, char **argv)
 	memset((char *)&from, 0, from_len);
 	for (c = 0; c < ns; c++) {
 	    if (pfds[c].revents & POLLIN)
-  #ifdef IPV6
 		newsockfd = accept(s[c], (struct sockaddr *)&from, &from_len);
-  #else
-		newsockfd = accept(s[c], (struct sockaddr *)&from, &from_len);
-  #endif
 	    else if (pfds[c].revents & (POLLERR | POLLHUP | POLLNVAL)) {
 		report(LOG_ERR, "exception on listen FD %d", s[c]);
 		tac_exit(1);
@@ -685,6 +681,7 @@ main(int argc, char **argv)
 	session.peer = tac_strdup(host);
 
 	if (session.peerip) free(session.peerip);
+	memset(host, 0, NI_MAXHOST);
 #ifdef IPV6
 	session.peerip = tac_strdup((char *)inet_ntop(from.sin6_family,
           &from.sin6_addr, host, INET6_ADDRSTRLEN));
@@ -706,18 +703,24 @@ main(int argc, char **argv)
         close(newsockfd);
         continue;
       }
-      if (session.peerip) {
-        /* now we check the process count per client */
-        procs_for_client = get_client_count(session.peerip);
-        report(LOG_ALERT, "connection [%d] from %s [%s]", procs_for_client + 1,
-            session.peer, session.peerip);
-        if (procs_for_client >= cfg_get_maxprocsperclt()) {
-          report(LOG_ALERT, "refused connection from %s [%s] at client max procs [%d]",
-            session.peer, session.peerip, procs_for_client);
-          shutdown(newsockfd, 2);
-          close(newsockfd);
-          continue;
-        }
+      /* we did not get a peer IP for some reason */
+      if (! session.peerip) {
+      	report(LOG_ALERT, "Refused connection from %s [%s], no peer IP?",
+        	session.peer, session.peerip);
+        shutdown(newsockfd, 2);
+        close(newsockfd);
+	continue;
+      }
+      /* now we check the process count per client */
+      procs_for_client = get_client_count(session.peerip);
+      report(LOG_ALERT, "connection [%d] from %s [%s]", procs_for_client + 1,
+          session.peer, session.peerip);
+      if (procs_for_client >= cfg_get_maxprocsperclt()) {
+        report(LOG_ALERT, "refused connection from %s [%s] at client max procs [%d]",
+          session.peer, session.peerip, procs_for_client);
+        shutdown(newsockfd, 2);
+        close(newsockfd);
+        continue;
       }
 #endif
 	    pid = fork();
