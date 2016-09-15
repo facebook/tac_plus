@@ -8,6 +8,10 @@ ConditionPathExists=/etc/tac_plus.conf
 LimitCORE=16G
 StandardOutput=null
 
+ExecStartPre=/usr/bin/tac_plus \
+  -C /etc/tac_plus.conf \
+  -P
+
 ExecStart=/usr/bin/tac_plus6 \
   -C /etc/tac_plus.conf \
   -B :: \
