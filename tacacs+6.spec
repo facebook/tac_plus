@@ -2,7 +2,7 @@ Summary: TACACS+6 Daemon
 Name: tacacs+6
 Group: Networking/Servers
 Version: FB4.0.4.19.1
-Release: 16fb
+Release: 17fb
 License: Cisco
 
 Packager: Cooper Lees <cooper@fb.com>
@@ -25,6 +25,7 @@ IPv6 Tacacs+ Daemon for Linux
 %prep
 umask 022
 %{__rm} -rf %{_tmppath}/tacacs+-%{version}-%{release}-root/*
+%{__rm} -rf %{_builddir}/tacacs+-%{version}
 cd %{_builddir}
 tar xvzf %{_sourcedir}/tacacs+-%{version}.tar.gz
 if [ ! -L %{name}-%{version} ]; then
