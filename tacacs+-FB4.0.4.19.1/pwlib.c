@@ -48,7 +48,7 @@ static int etc_passwd_file_verify(char *, char *, struct authen_data *);
 static int des_verify(char *, char *);
 static int md5_verify(char *, char *);
 #if HAVE_PAM
-static int pam_verify(char *, char *);
+static int pam_verify(char *, char *, struct authen_data *data);
 #endif
 static int passwd_file_verify(char *, char *, struct authen_data *, char *);
 
@@ -155,7 +155,7 @@ verify(char *name, char *passwd, struct authen_data *data, int recurse)
 #if HAVE_PAM
     if (strcmp(cfg_passwd, "PAM") == 0) {
 	    /* try to verify the password via PAM */
-	    if (!pam_verify(name, passwd)) {
+	    if (!pam_verify(name, passwd, data)) {
 	        data->status = TAC_PLUS_AUTHEN_STATUS_FAIL;
 	        return(0);
 	        } else
@@ -640,9 +640,10 @@ fail:
  * return 1 if verified, 0 otherwise.
  */
 static int
-pam_verify(char *user, char *passwd)
+pam_verify(char *user, char *passwd, struct authen_data *data)
 {
     int			err;
+    int			acct;
     int			pam_flag;
     struct pam_conv	conv = { pam_tacacs, NULL };
     pam_handle_t	*pamh = NULL;
@@ -670,10 +671,42 @@ pam_verify(char *user, char *passwd)
 
     switch ((err = pam_authenticate(pamh, pam_flag))) {
     case PAM_SUCCESS:
-	pam_end(pamh, err);
-	if (debug & DEBUG_PASSWD_FLAG)
-	    report(LOG_DEBUG, "pam_verify returns 1");
-	return(1);
+	switch ((acct = pam_acct_mgmt(pamh, pam_flag))) {
+	case PAM_SUCCESS:
+	    if (debug & DEBUG_PASSWD_FLAG)
+	        report(LOG_DEBUG, "pam_acct_mgmt returns PAM_SUCCESS");
+	    pam_end(pamh, err);
+	    if (debug & DEBUG_PASSWD_FLAG)
+	        report(LOG_DEBUG, "pam_verify returns 1");
+	    return(1);
+	    break;
+	case PAM_NEW_AUTHTOK_REQD:
+	    if (debug & DEBUG_PASSWD_FLAG)
+	        report(LOG_DEBUG, "pam_acct_mgmt returns PAM_NEW_AUTHTOK_REQD");
+	    if (data->server_msg)
+	        free(data->server_msg);
+	    data->server_msg = tac_strdup("Password will expire soon, please change it immediately");
+	    break;
+	case PAM_AUTHTOK_EXPIRED:
+	    if (debug & DEBUG_PASSWD_FLAG)
+	        report(LOG_DEBUG, "pam_acct_mgmt returns PAM_AUTHTOK_EXPIRED");
+	    if (data->server_msg)
+	        free(data->server_msg);
+	    data->server_msg = tac_strdup("Password has expired");
+	    break;
+	case PAM_ACCT_EXPIRED:
+	    if (debug & DEBUG_PASSWD_FLAG)
+	        report(LOG_DEBUG, "pam_acct_mgmt returns PAM_ACCT_EXPIRED");
+	    if (data->server_msg)
+	        free(data->server_msg);
+	    data->server_msg = tac_strdup("Account has expired");
+	    break;
+	default:
+	    if (debug & DEBUG_PASSWD_FLAG)
+	        report(LOG_DEBUG, "pam_acct_mgmt() returned unknown value %d",
+		       acct);
+	    break;
+	}
 	break;
     case PAM_USER_UNKNOWN:
 	if (debug & DEBUG_PASSWD_FLAG)
