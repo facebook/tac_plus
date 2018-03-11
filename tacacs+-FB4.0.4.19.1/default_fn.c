@@ -79,7 +79,8 @@ default_fn(struct authen_data *data)
 {
     struct private_data *p;
     char *name = data->NAS_id->username;
-    char *clientip = data->NAS_id->NAC_address;
+    char *clientip = ((data->NAS_id->NAC_address) && data->NAS_id->NAC_address[0]) ?
+      data->NAS_id->NAC_address : "unknown";
 
     p = (struct private_data *) data->method_data;
 
@@ -201,14 +202,10 @@ default_fn(struct authen_data *data)
     case TAC_PLUS_AUTHEN_STATUS_ERROR:
 	return(0);
     case TAC_PLUS_AUTHEN_STATUS_FAIL:
-	    if (session.peer && clientip)
-	      report(LOG_NOTICE, "login failure: user=%s device=%s port=%s client=%s",
+	    if (session.peer)
+	      report(LOG_NOTICE, "login failure: user=%s device=%s ip=%s port=%s client=%s",
 		     name == NULL ? "unknown" : name,
 		     session.peer, session.peerip, session.port, clientip);
-	    else if (session.peer)
-	      report(LOG_NOTICE, "login failure: user=%s device=%s port=%s client=%s",
-		     name == NULL ? "unknown" : name,
-		     session.peer, session.peerip, session.port, "unknown");
 	    else
 	      report(LOG_NOTICE, "login failure: user=%s device=%s port=%s",
 		     name == NULL ? "unknown" : name,
@@ -216,14 +213,10 @@ default_fn(struct authen_data *data)
       return(0);
 
     case TAC_PLUS_AUTHEN_STATUS_PASS:
-        if (session.peer && clientip)
-            report(LOG_NOTICE, "login success: user=%s device=%s port=%s client=%s",
+        if (session.peer)
+            report(LOG_NOTICE, "login success: user=%s device=%s ip=%s port=%s client=%s",
                    name == NULL ? "unknown" : name,
                    session.peer, session.peerip, session.port, clientip);
-        else if (session.peer)
-            report(LOG_NOTICE, "login success: user=%s device=%s port=%s client=%s",
-                   name == NULL ? "unknown" : name,
-                   session.peer, session.peerip, session.port, "unknown");
         else
             report(LOG_NOTICE, "login success: user=%s device=%s port=%s",
                    name == NULL ? "unknown" : name,
