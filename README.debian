@@ -6,7 +6,7 @@ files are included for both Debian 7 (Wheezy) and Debian 8
 Right now, only amd64 binaries are generated.
 
 To build:
-	- mv tacacs+-FB4.0.4.19.1 fb-tac-plus_4.0.4.19.1
+	- mv src fb-tac-plus_4.0.4.19.1
 	- cp -R debian-{selected-version} tacacs+-FB4.0.4.19.1/debian
 	- cd fb-tac-plus_4.0.4.19.1
 	- dpkg-buildpackage -rfakeroot -uc -b
