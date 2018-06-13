@@ -1,0 +1,26 @@
+--- configure.ac	2018-05-29 10:56:13.746325000 -0700
++++ tacacs-F4.0.4.28/configure.ac	2018-05-29 10:54:40.184600000 -0700
+@@ -6,10 +6,9 @@
+ dnl VERSION needs to be updated in version.h.in such that 'make dist'
+ dnl uses the correct filename for the directory name and tarball and binaries
+ dnl get the right version numbers.
+-PACKAGE=`sh ./aconf/package.sh`
+-VERSION=`sh ./aconf/version.sh`
+-AC_INIT(m4_esyscmd(sh ./aconf/package.sh),
+- 	m4_esyscmd(sh ./aconf/version.sh))
++AC_INIT([tacacs], 
++ m4_esyscmd_s([sed -n 's/.*version.*"\(.*\)".*/\1/p' version.h.in]))
++
+ AC_CONFIG_AUX_DIR([aconf])
+ AC_CONFIG_MACRO_DIR([aconf])
+ AM_INIT_AUTOMAKE
+--- tacacs-F4.0.4.28-orig/version.h.in  2018-05-24 15:23:53.706925000 -0700
++++ tacacs-F4.0.4.28/version.h.in       2018-05-24 15:49:55.279005000 -0700
+@@ -3,6 +3,6 @@
+ #define VERSION_H
+ 
+ char package[] = "tacacs+";
+-char version[] = "F4.0.4.28";
++char version[] = "F4.0.4.28-1fb";
+ 
+ #endif

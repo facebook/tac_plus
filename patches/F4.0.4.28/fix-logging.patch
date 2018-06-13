@@ -1,0 +1,58 @@
+diff -u tacacs-F4.0.4.28-orig/default_fn.c tacacs-F4.0.4.28/default_fn.c
+--- tacacs-F4.0.4.28-orig/default_fn.c	2012-06-11 09:01:45.000000000 -0700
++++ tacacs-F4.0.4.28/default_fn.c	2018-05-21 13:42:00.273620000 -0700
+@@ -75,6 +75,8 @@
+ {
+     struct private_data *p;
+     char *name = data->NAS_id->username;
++    char *clientip = ((data->NAS_id->NAC_address) && data->NAS_id->NAC_address[0]) ?
++      data->NAS_id->NAC_address : "unknown";
+ 
+     p = (struct private_data *) data->method_data;
+ 
+@@ -196,23 +198,32 @@
+ 
+     switch (data->status) {
+     case TAC_PLUS_AUTHEN_STATUS_ERROR:
+-	return(0);
++	    return(0);
+     case TAC_PLUS_AUTHEN_STATUS_FAIL:
+-	if (session.peer)
+-	    report(LOG_NOTICE, "login failure: %s %s (%s) %s",
+-		   name == NULL ? "unknown" : name,
+-		   session.peer, session.peerip, session.port);
+-	else
+-	    report(LOG_NOTICE, "login failure: %s %s %s",
+-		   name == NULL ? "unknown" : name,
+-		   session.peerip, session.port);
++	    if (session.peer)
++	      report(LOG_NOTICE, "login failure: user=%s device=%s ip=%s port=%s client=%s",
++		     name == NULL ? "unknown" : name,
++		     session.peer, session.peerip, session.port, clientip);
++	    else
++	      report(LOG_NOTICE, "login failure: user=%s device=%s port=%s",
++		     name == NULL ? "unknown" : name,
++		     session.peerip, session.port);
++      return(0);
+     case TAC_PLUS_AUTHEN_STATUS_PASS:
+-	return(0);
++      if (session.peer)
++        report(LOG_NOTICE, "login success: user=%s device=%s ip=%s port=%s client=%s",
++         name == NULL ? "unknown" : name,
++         session.peer, session.peerip, session.port, clientip);
++      else
++        report(LOG_NOTICE, "login failure: user=%s device=%s port=%s",
++         name == NULL ? "unknown" : name,
++         session.peerip, session.port);
++	    return(0);
+ 
+     default:
+-	report(LOG_ERR, "%s %s: default_fn set bogus status value %d",
+-	       session.peer, session.port, data->status);
+-	data->status = TAC_PLUS_AUTHEN_STATUS_ERROR;
++	    report(LOG_ERR, "%s %s: default_fn set bogus status value %d",
++	     session.peer, session.port, data->status);
++	     data->status = TAC_PLUS_AUTHEN_STATUS_ERROR;
+ 	return(0);
+     }
+ }

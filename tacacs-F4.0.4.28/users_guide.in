@@ -1,0 +1,2222 @@
+		TAC_PLUS Developer's Kit vF4.0.4.alpha
+		--------------------------------------
+
+Author: Lol Grant
+
+Note: this is a DEVELOPER'S KIT.  You probably shouldn't be using this
+if you don't need source code. Instead, consider using CiscoSecure,
+Cisco's supported, commercial Tacacs+ daemon.
+
+   Copyright (c) 1995-1998 by Cisco systems, Inc.
+
+   Permission to use, copy, modify, and distribute this software for
+   any purpose and without fee is hereby granted, provided that this
+   copyright and permission notice appear on all copies of the
+   software and supporting documentation, the name of Cisco Systems,
+   Inc. not be used in advertising or publicity pertaining to
+   distribution of the program without specific prior permission, and
+   notice be given in supporting documentation that modification,
+   copying and distribution is by permission of Cisco Systems, Inc.
+
+   Cisco Systems, Inc. makes no representations about the suitability
+   of this software for any purpose.  THIS SOFTWARE IS PROVIDED ``AS
+   IS'' AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+   WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+   FITNESS FOR A PARTICULAR PURPOSE.
+
+Please NOTE: None of the TACACS code available here comes with any
+warranty or support, however, comments or questions may be addressed
+to Cisco systems via email at the address:
+
+		customer-service@cisco.com  (or more simply)
+ 		      cs@cisco.com
+
+and we will do our best to handle them, though we cannot guarantee a
+timely response, as this code is UNSUPPORTED. Be sure you've read this
+user's guide, including the frequently asked questions include in it,
+before posting.
+
+Cisco systems also maintains an extensive World Wide Web site at
+
+		http://www.cisco.com/
+
+In addition, there are two mailing lists which may be of interest to
+users of Tacacs+.
+
+The first is a mailing list run by spot.Colorado.EDU which discusses
+many things pertaining to Cisco products. It is not run by Cisco
+Systems, Inc. and is not part of Cisco's formal service request
+channels, however, many knowledgeable people, including staff members
+of Cisco Systems, Inc. voluntarily read and respond on the list.
+
+Requests to be added to or deleted from the list at spot.Colorado.EDU,
+along with other administrative issues concerning it can be sent to:
+
+        cisco-request@spot.Colorado.EDU
+
+There is also a relatively new list called TACPLUS-L, run by
+disaster.com, created for the purpose of information exchange between
+TACACS+ Users. It is intended as a supplement to the list at
+spot.Colorado.EDU, aiding TACACS+ users and prospective users in many
+issues including but not limited to technical support, bug reports and
+workarounds, configuration information, recommendations for future
+versions of TACACS+, and general talk about TACACS+ development,
+implementation, administration, etc.
+
+Please note that neither of these lists is in fact connected with
+Cisco Systems, Inc. or any of its subsidiaries. Standard etiquette
+rules apply.
+
+To subscribe to the TACPLUS-L list, send a message to
+
+	tacplus-l-request@disaster.com
+
+In the body of the letter, enter
+
+	SUBSCRIBE TACPLUS-L your Name
+
+to be automatically added, or visit their web page at
+http://www.disaster.com/tacplus/.
+
+Also, Robert Kiessling maintains a TACACS+ FAQ at
+http://www.easynet.de/tacacs-faq.
+
+Lastly, I am always interested in seeing contributed patches, so
+consider mailing any modifications you make, as context diffs (be sure
+to indicate with the version your patches are based on), to
+tacacs-patches@cisco.com. As always, no support is implied, nor any
+assurance that patches will be made available via ftp (though that is
+my intent) or incorporated into any code.
+
+Definitions and Terms
+---------------------
+
+NAS --- A Network Access Server e.g. a Cisco box, or any other
+	*client* which makes tacacs+ authentication and authorization
+	requests, or generates Tacacs+ accounting packets.
+
+Daemon -- A program which services network requests for authentication
+	and authorization, verifies identities, grants or denies
+	authorizations, and logs accounting records.
+
+passwd(5) files -- files conforming to Unix password style format, as
+	documented in section 5 of the Unix manuals.
+
+AV pairs -- strings of text in the form "attribute=value" sent between a
+	NAS and a tacacs+ daemon as part of the Tacacs+ protocol.
+
+Since a NAS is sometimes referred to as a server, and a daemon is also
+often referred to as a server, the term "server" has been avoided here
+in favor of the less ambiguous terms "NAS" and "Daemon".
+
+TACACS, XTACACS and TACACS+
+---------------------------
+
+Note that there are now at least 3 versions of authentication protocol
+that people commonly refer to as "TACACS".
+
+The first is ordinary tacacs, which was the first one offered on Cisco
+boxes and has been in use for many years. The second is an extension
+to the first, commonly called Extended Tacacs or XTACACS, introduced
+in 1990.
+
+The third one is TACACS+ (or T+ or tac_plus) which is what is documented
+here. TACACS+ is NOT COMPATIBLE with any previous versions of tacacs.
+
+In addition to the 3 versions of tacacs running on Cisco boxes, the
+fact that we distribute the source code to the daemon has meant that
+additional implementations of tacacs daemons have been produced by
+people who have made modifications to our source code.
+
+BUILDING TAC_PLUS
+-----------------
+Tac_plus is known to build and run on the following platforms:
+
+AIXv3.2 (using -DAIX and bsdcc. See tac_plus.h for more details).
+HP/UX A.09.01 using -DHPUX
+i86 Solaris 2.4 (SUNOS 5.4), using SUNpro SW2.0.1 & -DSOLARIS
+Sun4 Solaris 2.4 using SUNpro SC3.0.1 and -DSOLARIS
+SUNOS 4.1.2 sparc-2
+SUNOS 4.1.3
+MIPS R3K SGI IRIX 4.05F (using -DMIPS)
+BSDI BSD/386 1.1 (using -DBSDI)
+FREEBSD 2.0-RELEASE (using -DFREEBSD)
+LINUX 1.2.8 (using -DLINUX)
+
+To build tac_plus, untar the tarfile distribution into a clean
+directory e.g.
+
+	tar -xvf tac_plus.tar
+
+Edit the top of the Makefile to select the appropriate defaults
+for your system. Then type
+
+	make tac_plus
+
+The default version can authenticate using its internal database,
+s/key or passwd(5) style files. Authorization is done via the
+internal database or via calls to external programs, which the
+administrator configures.
+
+To use S/KEY, you must obtain and build the s/key library (libskey.a)
+yourself.  You can then compile in S/KEY support per the instructions
+for S/KEY in the Makefile.  I got my S/KEY code originally from
+crimelab.com but now it appears the only source is ftp.bellcore.com. I
+suggest you try a web search for s/key source code.
+
+Note: S/KEY is a trademark of Bell Communications Research (Bellcore).
+
+Should you need them, there are routines for accessing password files
+(getpwnam,setpwent,endpwent,setpwfile) in pw.c.
+
+Lastly, you may also need to add lines to your /etc/services file to
+get tacacs+ to work correctly e.g. something along the lines of:
+
+tacacs      tcp/49
+
+You'll need to consult your system manuals for exact details of how to
+do this.
+
+A NOTE ABOUT ARAP, MSCHAP AND DES
+---------------------------------
+You link tac_plus with the supplied DES library for ARAP and MSCHAP with
+configure's --enable-arapdes and --enable-mschapdes options. This is
+recommended, as it will allow you to process ARAP and MSCHAP requests on
+your daemon, which is more efficient, and also more secure than processing
+them on the NAS.
+
+Lastly, this limitation of MSCHAP, ARAP and DES has no bearing on the
+use of des passwords for regular logins. Regular logins also use DES
+but they do it via the "crypt" system call, which is usually found in
+a library on the Unix host where you compile your daemon.
+
+There are additional restrictions on doing MSCHAP (see the FAQ later
+in this document).
+
+CONFIGURING TAC_PLUS
+---------------------
+
+Tac_plus is configured via a single configuration file. You can create
+a configuration file from scratch or, if you have passwd(5) and
+supplementary files from earlier versions of tacacs, you can convert
+these to configuration file format by running the supplied perl script
+tac_convert.
+
+CONVERTING EXISTING PASSWD(5) FILES
+-----------------------------------
+
+To convert an existing passwd(5) file e.g. one used with an older
+version of tacacs, use the tac_convert perl script as follows:
+
+tac_convert <passwd file> [-g] [<supplementary file>]
+
+1). If you have no supplementary file, simply omit it.
+
+2). If the groupid field of your passwd file does NOT represent a
+valid acl number (e.g if it's really a unix passwd file this field is
+a group id, not an acl number), just omit the -g flag.
+
+The rest of this document assumes that you are configuring tac_plus
+from scratch.
+
+CONFIGURING TAC_PLUS FROM SCRATCH
+---------------------------------
+
+A configuration file consists of some top-level directives for setting
+defaults and for setting up the encryption key, followed by a
+declaration for each user and group you want to configure.  Within
+each user or group declaration, there are declarations for
+authenticating and authorizing that user.
+
+1). Configuring the encryption key
+
+If you want tac_plus to encrypt its packets (and you almost certainly
+*DO* want this, as there can be usernames and passwords contained in
+these packets), then you must specify an encryption key in the
+configuration file. The identical key must also be configured on any
+NAS which communicates with tac_plus.
+
+This is done using the statement
+
+key = "your key here"
+
+NOTE: You only need double quotes on the daemon if your key contains
+spaces.
+
+Confusingly, even if your key does contain spaces, you should NEVER
+use double quotes when you configure the matching key on the NAS.
+
+During debugging, it may be convenient to temporarily switch off
+encryption by not specifying any key.  Be careful to remember to
+switch encryption back on again after you've finished debugging.
+
+The current code does not support host-specific keys (left as an
+exercise to the reader).
+
+On the NAS, you also need to configure the *same* key. Do this by
+issuing:
+
+    aaa new-model
+    tacacs-server key <your key here>
+
+COMMENTS IN CONFIGURATION FILES
+-------------------------------
+Comments can appear anywhere in the configuration file, starting with
+the # character and extending to the end of the current line. Should
+you need to disable this special meaning of the # character, e.g. if
+you have a password containing a # character, simply enclose the string
+containing it within double quotes.
+
+CONFIGURING USERS AND GROUPS
+----------------------------
+
+Each user may belong to a group (but only one group).  Each group may
+in turn belong to one other group and so on ad infinitum.
+
+Users and groups are declared as follows. Here we declare two users
+"fred" and "lily", and two groups, "admin" and "staff".
+
+Fred is a member of group "admin", and group "admin" is in turn a
+member of group "staff". Lily is not a member of any group.
+
+user = lily {
+    # user lily is not a member of any group
+    # and has nothing else configured as yet
+}
+
+user = fred {
+    # fred is a member of group admin
+    member = admin
+}
+
+group = admin {
+    # group admin is a member of group staff
+    member = staff
+}
+
+group = staff {
+    # group staff is not a member of any group
+}
+
+RECURSION AND GROUPS
+--------------------
+
+In general, when the daemon looks up values e.g. passwords, it will
+look first to see if the user has her own password. If not, it looks
+to see if she belongs to a group and if so, whether the group has a
+password defined. If not, this process continues through the hierarchy
+of groups (a group can be a member of another group) until a value is
+found, or there are no more groups.
+
+This recursive process occurs for lookups of expiration dates, for
+pap, arap and chap "secrets", and also for authorization parameters (see
+later).
+
+A typical configuration technique is thus to place users into groups
+and specify as many groupwide characteristics in the group declaration
+as possible. Then, individual user declarations can be used to
+override the group settings for selected users as needed.
+
+CONFIGURING USER AUTHENTICATION
+-------------------------------
+
+User Authentication can be specified separately for PAP, ARAP, CHAP,
+and normal logins.  In addition, a user global authentication method
+can be given that will be used if a per-protocol method is not
+specified.
+
+PAP, ARAP, CHAP, and global user authentication must be given in clear
+text.
+
+The following assigns the user mary five different passwords for ARAP,
+inbound and outbound CHAP, inbound PAP, outbound PAP, and normal login
+respectively:
+
+    user = mary {
+	arap = cleartext "arap password"
+	chap = cleartext "chap password"
+	pap  = cleartext "inbound pap password"
+	opap = cleartext "outbound pap password"
+	login = des XQj4892fjk
+    }
+
+
+The following assigns the user agnes a single password for all the
+above types of login (except outbound PAP):
+
+    user = agnes {
+	global = cleartext "Agnes global password"
+    }
+
+NOTE: you cannot use a global user password for outbound PAP. This is
+because outbound PAP is implemented by sending the password from the
+daemon to the NAS. This is a security issue if the TACACS+ key is ever
+compromised.
+
+There are 4 ways to authenticate a user for login.
+
+1). You can include a DES (or cleartext) password for a user or for a
+group that s/he is a member of, viz:
+
+    user = joe {
+        member = admin
+        # this is lily's encrypted DES password. It overrides the admin
+	# group's password
+        login = des XQkR21zMB0TDU
+    }
+
+    user = fred {
+        # fred is a member of group admin. He inherits the group's password
+	# as he does not have his one of his own.
+        member = admin
+    }
+
+    group = admin {
+        # group admin has a cleartext password which all members share
+        # unless they have their own password defined
+        login = cleartext foobar
+    }
+
+If no password is needed for this user, this can be accomplished with
+the 'nopassword' option:
+
+    user = foo {
+       login = nopassword
+    }
+
+NOTE: The C program built from generate_passwd.c may be used to
+hand-generate encrypted passwords, or they may be taken from a Unix
+passwd (or shadow) file.
+
+2). Authentication using passwd(5) files.
+
+For selected users, you can perform DES authentication using existing
+passwd(5) files instead of entering the password into the
+configuration file directly (though using passwd(5) files is
+noticeably less efficient for large files).
+
+You can specify this behavior per-user, by naming a passwd(5) file in
+the password declaration (instead of giving a DES password), as
+follows:
+
+    user = fred {
+       # look in file /etc/tac_plus_passwords to authenticate this user
+       login = file /etc/tac_plus_passwords
+    }
+
+3). Authentication using s/key.
+
+If you have successfully built and linked in a suitable s/key library
+and compiled tac_plus to use s/key, you can then specify that a user
+be authenticated via s/key, as follows:
+
+    user = fred {
+      login = skey
+    }
+
+4). Authentication using PAM (Pluggable Authentication Modules)
+
+Assuming that your OS supports it, tac_plus can be configured to use PAM
+for authentication, which may make it possible to use LDAP, SecureID, etc
+if you have the appropriate PAM module.  Use may require configuration of
+the PAM libraries themselves; see their documentation.
+
+    user = fred {
+      login = PAM
+    }
+
+Be aware that when the tac_plus daemon runs as a non-root user (as is the
+default in FreeBSD /usr/ports), it will not be able to authenticate using
+the pam_unix.so module.  This is because the system function getpwnam()
+called by pam_unix.so requires root privileges to retrieve the password to
+validate from the /etc/master.passwd or /etc/shadow file. The symptom will
+be that for each authentiction that is attempted, the password will appear
+to be wrong whether it was typed correctly or not.
+
+
+RECURSIVE PASSWORD LOOKUPS
+---------------------------
+
+As stated earlier, authentication passwords are looked up recursively:
+The daemon looks first to see if the user has her own password. If
+not, it looks to see if she belongs to a group which has a
+password. This process recurses through the hierarchy of groups (a
+group can be a member of another group) until a password is found, or
+there are no more groups.
+
+CONFIGURING DEFAULT AUTHENTICATION
+-----------------------------------
+By default, an unrecognized user will be denied authentication (NOTE:
+there is no way to authenticate someone with no username).
+
+At the top level of the configuration file, you can set the default
+authentication to use a passwd(5) file, viz:
+
+    default authentication = file /etc/passwd
+
+The effect of this statement is that if a user does not appear in the
+configuration file, the daemon will attempt to authenticate the user
+using passwords from this file i.e. /etc/passwd in this example.
+
+If you have passwd(5) files from previous versions of tacacs daemons,
+this facility allows you to authenticate using the passwd(5) from
+older versions of tacacs, while you migrate to using the new
+configuration file.
+
+CONFIGURING EXPIRY DATES
+------------------------
+An entry of the form:
+
+user = lol {
+    expires = "MMM DD YYYY"
+    password = cleartext "bite me"
+}
+
+will cause the user's passwords to become invalid, starting on the
+expiry date. The only valid date format is e.g. "Jan 1 1980". Case is
+NOT significant.
+
+A expiry warning message is sent to the user when she logs in,
+starting at 14 days before the expiration date.
+
+On expiry, the administrator must re-set the expiry date in the
+configuration file in order to grant continued access. Expiry applies
+to all password types except "file" passwords.
+
+If passwd(5) files are being used for authentication, the "expires"
+field in the configuration file is not consulted. Instead, the daemon
+looks at the "shell" field of the password file entry for a valid
+expiry date.
+
+If Solaris shadow password files are used for authentication, the
+"expires" field in the configuration file is not consulted. The expiry
+field from the shadow password file (if it exists) is used as the
+expiration date.
+
+CONFIGURING AUTHENTICATION ON THE NAS
+-------------------------------------
+
+On the NAS, to configure login authentication on all lines (including
+vty and console lines)
+
+    aaa new-model
+    aaa authentication login default tacacs+
+
+NOTE: As soon as you issue this command, you will no longer be able to
+create new logins to your NAS without a functioning tacacs+ daemon
+appropriately configured with usernames and password, so make sure you
+have this ready.
+
+As a safety measure while setting up, we suggest you configure an
+enable secret and make it the last resort authentication method, so
+if your tacacs+ daemon fails to respond you will be able to use the
+NAS enable password to login. To do this, configure:
+
+    enable secret foo
+    aaa authentication login default tacacs+ enable
+
+If all else fails, and you find yourself locked out of the NAS due to
+a configuration problem, the section on "recovering from lost
+passwords" on Cisco's CCO web page will help you dig your way out.
+
+CONFIGURING ENABLE PASSWORDS
+----------------------------
+
+The default privilege level for an ordinary user on the NAS is usually
+1. When a user enables, she can reset this level to a value between 0
+and 15 by using the NAS "enable" command. If she doesn't specify a
+level, the default level she enables to is 15.
+
+You can enable via tacacs+ e.g. by configuring on the NAS:
+
+	aaa authentication enable default tacacs+
+
+then whenever you attempt to enable, an authentication request is sent
+with the special username $enab<n>$ where <n> is the privilege level
+you are attempting to enable to.
+
+(Note: in order to be compatible with earlier versions of tacacs, when
+the requested enable level is 15, the daemon will also try the
+username $enable$ before trying username $enab15$).
+
+For example, with the above declaration, in order to enable on the
+NAS, you need a user declaration like this one, on the daemon:
+
+user = $enab15$ {
+    login = cleartext "the enable password for level 15"
+}
+
+Note: Be aware that this does have the side effect that you now have a
+user named $enab15$ who can then login to your NAS if she knows the
+enable password.
+
+Here is a similar declaration allowing users to enable to level 4:
+
+user = $enab4$ {
+    login = des bsoF4OivQCY8Q
+}
+
+CONFIGURING AUTHORIZATION
+-------------------------
+
+Authorization must be configured on both the NAS and the daemon to
+operate correctly. By default, the NAS will allow everything until you
+configure it to make authorization requests to the daemon.
+
+On the daemon, the opposite is true: The daemon will, by default, deny
+authorization of anything that isn't explicitly permitted.
+
+Authorization allows the daemon to deny commands and services
+outright, or to modify commands and services on a per-user
+basis. Authorization on the daemon is divided into two separate parts:
+commands and services.
+
+AUTHORIZING COMMANDS
+--------------------
+
+Exec commands are those commands which are typed at a Cisco exec
+prompt. When authorization is requested by the NAS, the entire command
+is sent to the tac_plus daemon for authorization.
+
+Command authorization is configured by specifying a list of
+egrep-style regular expressions to match command arguments (see the
+supplied man page, regexp.3, for a full description of regular
+expressions) and an action which is "deny" or "permit".
+
+The following configuration example permits user Fred to run the
+following commands:
+
+    telnet 131.108.13.<any number> and
+    telnet 128.<any number>.12.3 and
+    show <anything>
+
+All other commands are denied (by default).
+
+user=fred {
+
+    cmd = telnet {
+	# permit specified telnets
+	permit 131\.108\.13\.[0-9]+
+	permit 128\.[0-9]+\.12\.3
+    }
+    cmd = show {
+	# permit show commands
+	permit .*
+    }
+}
+
+NOTE: If an argument list you specify contains spaces or tabs, you
+must enclose it in double quotes.
+
+The command and arguments which the user types gets matched to the
+regular expressions you specify in the configuration file (in order of
+appearance).  The first successful match performs the associated
+action (permit or deny). If there is no match, the command is denied
+by default.
+
+Conversely, the following configuration example can be used to deny
+the command:
+
+    telnet 131.108.13.<any number>
+
+and permit all other arguments, since the last line will match any
+argument list. All other commands and services are permitted due to
+the "default service = permit" clause.
+
+Note: the default statement must be the first in the user clause
+
+user=fred {
+    default service = permit
+    cmd = telnet {
+	# allow all fred's telnet commands except to 131.108.13.*
+	deny 131\.108\.13\.[0-9]+
+	permit .*
+    }
+}
+
+Note: Matches are not anchored, so "deny 131.108.13.[0-9]+" matches
+anywhere in the command. To anchor the match, use ^ at the beginning
+of the regular expression.
+
+Note: When a command has multiple arguments, users may enter them in
+many different permutations. It can be cumbersome to create regular
+expressions which will reliably authorize commands under these
+conditions, so administrators may wish to consider other methods of
+performing authorization e.g. by configuring NAS-local privileged
+enable levels on the NAS itself.
+
+COMMAND EXPANSION
+-----------------
+
+For command authorization, the Cisco NAS expands all commands to their
+full names e.g. when you type "config t" on the NAS, this will be
+expanded to "configuration terminal" before being sent to the daemon
+so that you don't need to list all the possible contractions of a
+command.
+
+CONFIGURING DEFAULT AUTHORIZATION
+---------------------------------
+
+There are 3 places where defaults for authorization may be
+configured. Unless specified to the contrary, the default is always to
+deny authorization.
+
+1). To override the default denial of authorization for users who are
+not explicitly listed in the configuration file, the ersatz user
+DEFAULT, if defined, can be used for authorizing such users, viz:
+
+default authentication = file /etc/passwd
+
+user = DEFAULT {
+    service = ppp protocol = ip {
+	addr-pool=foobar
+    }
+}
+
+In this example, users who do not appear elsewhere will be
+authenticated via the /etc/passwd file, and authorized by the contents
+of the user = DEFAULT entry.
+
+Note: For backward compatibility, the directive,
+
+	default authorization = permit
+
+may still be specifed at the top level of the configuration file. This
+overrides the default denial of authorization for users who are not
+explicitly listed in the configuration file, permitting all
+authorization requests for such users.
+
+2). At the user level i.e. inside the braces of a user declaration,
+the default for a user who doesn't have a service or command
+explicitly authorized is to deny that service or command.  The
+following directive will permit the service or command by default
+instead:
+
+user = lol {
+    default service = permit
+}
+
+NOTE: This directive must appear first inside the user declaration.
+
+3). At the service authorization level i.e. inside the braces of a
+service declaration, arguments in an authorization request are
+processed according to the algorithm described later. Some actions
+when authorizing services (e.g. when matching attributes are not
+found) depend on how the default is configured. The following
+declaration changes the default from deny to permit for this user and
+service.
+
+user = lol {
+    service = exec {
+        default attribute = permit
+    }
+}
+
+NOTE: This directive must appear before any others inside the service
+declaration.
+
+NOTE: for command authorization (as opposed to service authorization
+being discussed here), you specify deny .* or permit .* as the last
+line of the regular expression matches to create default behavior.
+
+AUTHORIZING EXEC STARTUP
+-------------------------
+
+If you authorize some exec commands, you implicitly agree to allow
+that user to start an exec (it doesn't make sense to permit exec
+commands if an exec can't be started to run those commands)
+
+In addition to agreeing to allow an exec to start, you can supply some
+parameters whenever an exec starts e.g. an autocommand, a dialback
+string or a connection access list (acl).
+
+In the example below, when an exec is started on the NAS, an acl of 4
+will be returned to the NAS:
+
+user=fred {
+
+    # this following line permits an exec to start and permits
+    # all commands and services by default
+
+    default service = permit
+
+    service = exec {
+	# When an exec is started, its connection access list will be 4.
+	# It also has an autocmd.
+        acl = 4
+	autocmd = "telnet foobar"
+    }
+
+    cmd = telnet {
+	# allow all fred's telnet commands except telnet to 131.108.13.*
+	deny 131\.108\.13\.[0-9]+
+	permit .*
+    }
+}
+
+NOTE: specifying an autocommand, or any other exec services, is part
+of EXEC AUTHORIZATION. For it to work, you must also configure exec
+authorization on your NAS e.g.
+
+	aaa authorization exec tacacs+
+
+
+AUTHORIZING EXEC, SLIP, PPP and ARAP SERVICES
+----------------------------------------------
+
+Authorizing exec, slip, PPP and arap services is done quite
+differently from command authorization.
+
+When authorizing these services, the NAS sends a request containing a
+number of attribute-value (AV) pairs, each having the form
+
+	attribute=value
+
+(Note: during debugging, you may see AV pairs whose separator
+character is a "*" instead of a "=" sign. This is to signify that the
+value in a pair is optional. An "=" sign indicates a mandatory
+value. A "*" denotes an optional value).
+
+e.g. a user starting ppp/ip using an address of 131.108.12.44 would
+generate a request with the following AV pairs:
+
+	service=ppp
+	protocol=ip
+	addr*131.108.12.44
+
+You can use the NAS debugging command
+
+	debug aaa authorization
+
+to see what authorization AV pairs are being used by the NAS. Note: If
+you are not on the router console, you will also need to issue a
+'terminal monitor' command to see debug output.
+
+THE AUTHORIZATION PROCESS
+-------------------------
+
+Authorizing a single session can result in multiple requests being
+sent to the daemon.  For example, in order to authorize a dialin ppp
+user for IP, the following authorization requests will be made from
+the NAS:
+
+1). An initial authorization request to startup ppp from the exec,
+using the AV pairs service=ppp, protocol=ip, will be made (Note: this
+initial request will be omitted if you are autoselecting ppp, since
+you won't know the username yet).
+
+This request is really done to find the address for dumb PPP (or SLIP)
+clients who can't do address negotiation. Instead, they expect you to
+tell them what address to use before PPP starts up, via a text message
+e.g. "Entering PPP. Your address is 1.2.3.4". They rely on parsing
+this address from the message to know their address.
+
+2). Next, an authorization request is made from the PPP subsystem to
+see if ppp's LCP layer is authorized. LCP parameters can be set at
+this time (e.g. callback). This request contains the AV pairs
+service=ppp, protocol=lcp.
+
+3). Next an authorization request to startup ppp's IPCP layer is made
+using the AV pairs service=ppp, protocol=ipcp. Any parameters returned
+by the daemon are cached.
+
+4). Next, during PPP's address negotiation phase, each time the remote
+peer requests a specific address, if that address isn't in the cache
+obtained in step 3, a new authorization request is made to see if the
+peers requested address is allowable.  This step can be repeated
+multiple times until both sides agree on the remote peer's address or
+until the NAS (or client) decide they're never going to agree and they
+shut down PPP instead.
+
+As you can see from the above, a program which plans to handle
+authorization must be able to handle a variety of requests and respond
+appropriately.
+
+AUTHORIZATION RELIES ON AUTHENTICATION
+--------------------------------------
+
+Since we pretty much rely on having a username in authorization
+requests to decide which addresses etc. to hand out, it is important
+to know where the username for a PPP user comes from. There are
+generally 2 possible sources
+
+1). You force the user to authenticate by making her login to the exec
+and you use that login name in authorization requests. This username
+isn't propagated to PPP by default. To have this happen, you generally
+need to configure the "if-needed" method, e.g.
+
+aaa authentication login default tacacs+
+aaa authentication ppp default if-needed
+
+
+2). Alternatively, you can run an authentication protocol, PAP or CHAP
+(CHAP is much preferred), to identify the user. You don't need an
+explicit login step if you do this (so it's the only possibility if
+you are using autoselect). This authentication gets done before you
+see the first LCP authorization request of course.  Typically you
+configure this by doing:
+
+aaa authentication ppp default tacacs+
+int async 1
+ppp authentication chap
+
+If you omit either of these authentication schemes, you will start to
+see authorization requests in which the username is missing.
+
+CONFIGURING SERVICE AUTHORIZATION
+---------------------------------
+
+A list of AV pairs is placed in the daemon's configuration file in
+order to authorize services.  The daemon compares each NAS AV pair to
+its configured AV pairs and either allows or denies the service. If
+the service is allowed, the daemon may add, change or delete AV pairs
+before returning them to the NAS, thereby restricting what the user is
+permitted to do.
+
+The complete algorithm by which the daemon processes its configured
+AV pairs against the list the NAS sends, is given below.
+
+The Authorization Algorithm
+---------------------------
+
+Find the user (or group) entry for this service (and protocol), then
+for each AV pair sent from the NAS:
+
+    If the AV pair from the NAS is mandatory:
+
+	a). look for an exact attribute,value match in the user's
+	mandatory list. If found, add the AV pair to the output.
+
+	b). If an exact match doesn't exist, look in the user's
+	optional list for the first attribute match. If found, add the
+	NAS AV pair to the output.
+
+	c). If no attribute match exists, deny the command if the
+	default is to deny, or,
+
+	d). If the default is permit, add the NAS AV pair to the
+	output.
+
+    If the AV pair from the NAS is optional:
+
+	e). look for an exact attribute,value match in the user's
+	mandatory list. If found, add DAEMON's AV pair to output.
+
+	f). If not found, look for the first attribute match in the
+	user's mandatory list. If found, add DAEMONS's AV pair to output.
+
+	g). If no mandatory match exists, look for an exact
+	attribute,value pair match among the daemon's optional AV
+	pairs. If found add the DAEMON's matching AV pair to the
+	output.
+
+	h). If no exact match exists, locate the first attribute match
+	among the daemon's optional AV pairs. If found add the
+	DAEMON's matching AV pair to the output.
+
+	i). If no match is found, delete the AV pair if the default is
+	deny, or
+
+	j). If the default is permit add the NAS AV pair to the output.
+
+    k). After all AV pairs have been processed, for each mandatory
+    DAEMON AV pair, if there is no attribute match already in the
+    output list, add the AV pair (but add only ONE AV pair for each
+    mandatory attribute).
+
+RECURSIVE AUTHORIZATION
+-----------------------
+
+Remember that authorization is also recursive over groups, in the same
+way that password lookups are recursive. Thus, if you place a user in
+a group, the daemon will look in the group for authorization
+parameters if it cannot find them in the user declaration.
+
+EXAMPLES
+--------
+
+key = "your key here"
+
+user=fred {
+    login = des mEX027bHtzTlQ
+    name = "Fred Flintstone"
+    member = administrators
+    expires = "May 23 2005"
+    arap = cleartext "Fred's arap secret"
+    chap = cleartext "Fred's chap secret"
+
+    service = exec {
+	# When Fred starts an exec, his connection access list is 5
+        acl = 5
+
+	# We require this autocmd to be done at startup
+	autocmd = "telnet foo"
+    }
+
+   # All commands except show system are denied for Fred
+    cmd = show {
+
+	# Fred can run the following show command
+
+	permit system
+	deny .*
+    }
+
+    service = ppp protocol = ip {
+	# Fred can run ip over ppp only if he uses one
+        # of the following mandatory addresses. If he supplies no
+	# address, the first one here will be mandated
+
+	addr=131.108.12.11
+	addr=131.108.12.12
+	addr=131.108.12.13
+	addr=131.108.12.14
+
+	# Fred's mandatory input access list number is 101
+	inacl=101
+
+	# We will suggest an output access list of 102, but the NAS may
+	# choose to ignore or override it
+
+	optional outacl=102
+    }
+
+    service = slip {
+
+	# Fred can run slip. When he does, he will have to use
+	# these mandatory access lists
+
+	inacl=101
+	outacl=102
+    }
+}
+
+user = wilma {
+
+    # Wilma has no password of her own, but she's a group member so
+    # she'll use the group password if there is one. Same for her
+    # password expiry date
+
+    member = admin
+}
+
+group = admin {
+
+    # group members who don't have their own login password will be looked
+    # up in /etc/passwd
+
+    login = file /etc/passwd
+
+    # group members who have no expiry date set will use this one
+
+    expires = "Jan 1 1997"
+}
+
+
+USING PROGRAMS TO DO AUTHORIZATION
+----------------------------------
+
+There are some limitations to the authorization that can be done using
+a configuration file. The main ones are that you're constrained by the
+algorithm the daemon uses, and that the configuration is basically
+static, so if you're trying to use it to allocate dynamic things (such
+as addresses from a pool) that vary over time, you need another
+mechanism.
+
+One solution is to arrange for the daemon to call your own
+user-supplied programs to control authorization. These "callouts"
+permit almost complete control over authorization, allowing you to
+read all the fields in the authorization packet sent by the NAS
+including all its AV pairs, and to set authorization status and send a
+new set of AV pairs to the NAS in response.
+
+USING AV PAIRS FOR AUTHORIZATION
+--------------------------------
+
+During authorization, the NAS sends an authorization request packet
+containing various fields of interest and a set of AV pairs (see the
+tacacs+ protocol specification for a list of fields and pairs).
+
+Fields from the authorization packet can be supplied to the programs
+you call on their command line, by using the appropriate dollar
+variables in the configuration file (see below).
+
+AV pairs from the authorization packet are fed to the program's
+standard input, one per line. The program is expected to process the
+AV pairs and write them to its standard output, one per line. What
+happens then is determined by the exit status of the program.
+
+NOTE: AV pairs are text strings with the format
+attribute=value. Unlike the configuration file which allows spaces
+when specifying AV pairs, there should be no spaces surrounding the
+"=" sign when using the programmatic interface.
+
+CALLING SCRIPTS BEFORE AUTHORIZATION
+------------------------------------
+
+You can specify a per-user program to be called before any other
+attempt to authorize is made by using a "before" clause e.g.
+
+user = auth1 {
+    before authorization "/usr/local/bin/pre_authorize $user $port $address"
+}
+
+The AV pairs sent from the NAS will be supplied to this program's
+standard input, one pair per line.
+
+Fields from the initiating authorization packet which the NAS sends to
+the daemon can also be passed to the program by using dollar variables
+in the command line. A complete list of available variables is as
+follows (consult the API specification for more details).
+
+    user    -- user name
+    name    -- Nas name
+    port    -- Nas port
+    address -- Nac address (remote user location)
+    priv    -- privilege level (a digit, 0 to 15)
+    method  -- (a digit, 1 to 4)
+    type    -- (a digit, 1 to 4)
+    service -- (a digit, 1 to 7)
+    status  -- (pass, fail, error, unknown)
+
+Unrecognized variables will appear as the string "unknown".
+
+If the program returns a status of 0, authorization is unconditionally
+permitted. No further processing is done on this request and no AV
+pairs are returned to the NAS.
+
+If the program returns a status of 1, authorization is unconditionally
+denied. No further processing is done on this request and no AV pairs
+are returned to the NAS.
+
+If the program returns a status of 2, authorization is permitted.  The
+program is expected to modify the AV pairs that it receives on its
+standard input (or to create entirely new ones) and to write them, one
+per line, to its standard output. The new AV pairs will be sent to the
+NAS with a status of AUTHOR_STATUS_PASS_REPL.  No further processing
+takes place on this request.
+
+If the program returns a status of 3, authorization is denied, but all
+attributes returned by the program via stdout are returned to the
+NAS. Also, whatever the program returns on stderr is placed into the
+server-msg field and returned to the NAS as well.
+
+Any other status value returned from the program will cause an error
+to be returned to the NAS.
+
+Note that a status of 2 is not acceptable when doing command
+authorization.
+
+CALLING PROGRAMS AFTER AUTHORIZATION
+------------------------------------
+
+You can specify a per-user program to be called after authorization
+processing has been carried out by the daemon (but before the
+authorization status and AV pairs have been transmitted to the NAS).
+
+The program can optionally modify the AV pairs being sent back to the
+NAS and change the authorization status if required.
+
+group = auth1 {
+    # call /usr/local/bin/post_authorize passing it the username, port
+    # and current authorization status.
+    after authorization "/usr/local/bin/post_authorize $user $port $status"
+}
+
+The AV pairs resulting from the authorization algorithm that the
+daemon proposes to return to the NAS, are supplied to the program on
+standard input, one AV pair per line, so they can be modified if
+required.
+
+Fields from the incoming authorization packet which the NAS sent to
+the daemon can also be passed to the program on its command line by
+specifying dollar variables in the command line (see previous
+section).
+
+The program is expected to process the AV pairs and write them to its
+standard output, one per line. What happens then is determined by the
+exit status of the program:
+
+If the program returns a status of 0, authorization continues as if
+the program had never been called.  Use this if e.g. you just want a
+program to send mail when an authorization occurs, without otherwise
+affecting normal authorization.
+
+If the program returns a status of 1, authorization is unconditionally
+denied. No AV pairs are returned to the NAS. No further authorization
+processing occurs on this request.
+
+If the program returns a status of 2, authorization is permitted and
+any AV pairs returned from the program on its standard output are sent
+to the NAS in place of any AV pairs that the daemon may have
+constructed.
+
+Any other value will cause an error to be returned to the NAS by the
+daemon.
+
+WARNINGS AND CAUTIONS
+---------------------
+
+Customers attempting to write authorization scripts will find the NAS
+debugging command "debug aaa authorization" invaluable.
+
+Pre and post authorization programs are invoked by handing the command
+line to the Bourne shell. On many Unix systems, if the shell doesn't
+find the specified program it returns a status of one, which denies
+authorization. However, at least one Unix system (BSDI) returns a
+status code of 2 under these circumstances, which will permit
+authorization, and probably isn't what you intended.
+
+Note also that if your program hangs, the authorization will time out
+and return an error on the NAS, and you'll tie up a process slot on
+the daemon host, eventually running out of resources. There is no
+special code to detect this in the daemon.
+
+Unless you make special arrangements, the daemon will run as root and
+hence the programs it invokes will also run as root, which is a
+security weakness. It is strongly recommended that you use absolute
+pathnames when specifying programs to execute, and that you use the
+Makefile options TACPLUS_USERID and TACPLUS_GROUPID so that the
+daemon is not running as root when calling these programs,
+
+The daemon communicates with pre and post authorization programs over
+a pair of pipes. Programs using the standard i/o library will use full
+buffering in these circumstances. This shouldn't be a problem for most
+programs, since they'll read AV pairs till they see end of file on
+input, and they'll flush all output when they exit.
+
+Note that when avpairs containing spaces are listed in the
+configuration file, you need to enclose them in double quotes so that
+they are parsed correctly. Avpairs which are returned via standard
+output do not need delimiters and so should not be enclosed in double
+quotes.
+
+CONFIGURING AUTHORIZATION ON THE NAS
+------------------------------------
+
+If authorization is not explicitly configured on the NAS, no
+authorization takes place i.e. effectively, everything is
+permitted. Note that this is the converse of what happens on the
+daemon, where anything not explicitly permitted is denied by default.
+
+To configure command authorization on the NAS, issue the following NAS
+configuration commands:
+
+    aaa authorization commands 1 tacacs+
+    aaa authorization commands 15 tacacs+
+
+
+This will make the NAS send tacacs+ requests for all level 1 (ordinary
+user) and level 15 (privileged level) commands on all lines/interfaces.
+
+NOTE: As soon as you configure the above on your NAS, you will only be
+permitted to execute NAS commands which are permitted by your tacacs+
+daemon. So make sure you have configured, on the daemon, an
+authenticated user who is authorized to run commands, or you will be
+unable to do much on the NAS after turning on authorization.
+
+Alternatively, or in addition, you may also want to configure the
+following:
+
+    aaa authorization commands 1 tacacs+ if-authenticated
+
+This will use tacacs+ authorization for level 1 (user-level commands)
+but if problems arise, you can just switch off the tacacs+ server and
+authorization will then be granted to anyone who is authenticated.
+
+The following daemon configuration should be sufficient to ensure that
+you can always login as username "admin" (with a suitable password)
+and run any command as that user:
+
+user = admin {
+    default service = permit
+    login = des kppPfHq/j6gXs
+}
+
+
+ACCOUNTING
+-----------
+
+There is only one configurable accounting parameter -- the accounting
+file name. All accounting records are written, as text, to this
+filename. The filename is configured as follows at the top-level of
+the configuration file:
+
+accounting file = <filename>
+
+Since accounting requests occur (and are serviced) asynchronously, it
+is necessary to lock the accounting file so that two writers don't
+simultaneously update it.  The daemon uses the fcntl call to do this
+locking, so it is recommended that the accounting file reside on a
+local filesystem. Although fcntl locking over NFS is supported on some
+Unix implementations, it is notoriously unreliable. Even if your
+implementation is reliable, locking is likely to be extremely
+inefficient over NFS.
+
+NAS CONFIGURATION
+-----------------
+
+To get accounting records equivalent to previous versions of tacacs,
+the following is sufficient. "Stop" records contain elapsed time for
+connections and exec sessions.
+
+aaa accounting network stop-only tacacs+
+aaa accounting exec stop-only tacacs+
+
+
+CONFIGURING CALLBACK WITH TACACS+
+---------------------------------
+
+Note: Callback is available only in IOS 11.1 and later, and can only
+be controlled via Tacacs+ for ASYNC lines. ISDN callback can be
+configured on the NAS but cannot be controlled via AAA.
+
+Here is an example of AAA configuration (with exec and network
+accounting enabled):
+
+NAS configuration:
+
+aaa new-model
+tacacs-server host XX.XX.XX.XX
+tacacs-server key fookey
+aaa accounting exec wait-start tacacs+
+aaa accounting network wait-start tacacs+
+
+! Example of AAA configuration for Exec:
+aaa authentication login execcheck tacacs+
+aaa authorization network tacacs+
+service exec-callback
+:
+line 4
+login authentication execcheck
+
+! Example of AAA configuration for ARAP:
+aaa authentication arap arapcheck tacacs+
+aaa authorization network tacacs+
+arap callback
+:
+line 4
+arap authentication arapcheck
+
+! Example of AAA-specific configuration for PPP callback:
+aaa new-model
+aaa authentication ppp pppcheck tacacs+
+aaa authorization network tacacs+
+:
+int async 6
+ppp authentication chap pppcheck
+ppp callback accept
+
+Daemon configuration:
+
+Example of remote TACACS+ server CONFIG file entry for username `foobar':
+
+user = foobar {
+   arap = cleartext AAAA
+   login = cleartext LLLL
+   chap = cleartext CCCC
+   pap = cleartext PPPP
+   opap = cleartext OOOO
+   service = ppp protocol = lcp {
+        callback-dialstring=123456
+   }
+   service = arap {
+        callback-dialstring=2345678
+   }
+   service = exec {
+        callback-dialstring=3456789
+        callback-line=7
+        nocallback-verify=1
+   }
+}
+
+
+DEBUGGING CONFIGURATION FILES
+-----------------------------
+
+When creating configuration files, it is convenient to check their
+syntax using the -P flag to tac_plus e.g.
+
+    tac_plus -P -C <config file name>
+
+will syntax check the configuration file and print any error messages
+on the terminal.
+
+DEBUGGING A RUNNING SERVER
+--------------------------
+
+There is a myriad of debugging values that can be used in conjunction
+with the -d flag to produce debugging output in @TACPLUS_LOGFILE@.
+
+For example, starting the daemon with
+
+	tac_plus -C CONFIG -d 16
+
+will put authentication debugging into @TACPLUS_LOGFILE@. You can
+view this information by using the tail command.
+
+	tail -f @TACPLUS_LOGFILE@
+
+See the man page for more information.
+
+CHANGING CONFIGURATIONS
+-----------------------
+
+To change a configuration file, you must edit the configuration file
+and then send the daemon a SIGUSR1. This will cause it to reinitialize
+itself and re-read the configuration file.
+
+On startup, tac_plus creates the file @TACPLUS_PIDFILE@, if possible,
+containing its process id. If you invoke the daemon so that it listens
+on a non-standard port, the file created is @TACPLUS_PIDFILE@.<port>
+instead, where <port> is the port number the daemon is listening on.
+
+Assuming you are listening on the default port 49, something like the
+following should work:
+
+# kill -USR1 `cat @TACPLUS_PIDFILE@`
+
+It's a good idea to check that the daemon is still running after
+sending it a SIGUSR1, since a syntactically incorrect configuration
+file will cause the daemon to die.
+
+NOTE: The perl script generate_passwd.pl may be used to hand-generate
+encrypted passwords, or they may be taken from a Unix passwd file.
+
+CANNED CONFIGURATIONS
+---------------------
+
+Here are some canned configurations for getting demos started:
+
+1). A canned configuration for login authentication only. This allows
+user fred to login with password "abcdef". If the tacacs+ server dies,
+the enable secret will be accepted as a login password instead.
+
+DAEMON:
+
+key = <some key>
+
+# repeat as necessary for each user
+user = fred {
+   login = cleartext abcdef
+}
+
+NAS:
+
+aaa new-model
+enable secret foobar
+! use tacacs+. If server dies, use the enable secret password
+aaa authentication login default tacacs+ enable
+tacacs-server host <some host ip address>
+tacacs-server key <some key>
+
+2). A canned configuration for command authorization. This will allow
+user fred to login with password abcdef and to run the privileged
+(level 15) commands 'write terminal' and 'configure'. All other
+privileged commands will be denied.
+
+The "none" keyword in the NAS configuration line means that if the
+tacacs+ server dies, any command will be allowed.
+
+DAEMON:
+
+key = <some key>
+
+# repeat as necessary for each user
+user = fred {
+   login = cleartext abcdef
+   cmd = write  {
+        permit terminal
+    }
+   cmd = configure {
+       permit .*
+   }
+}
+
+
+NAS:
+
+aaa new-model
+! all level 15 (privileged commands). If server dies, allow everything
+aaa authorization commands 15 tacacs+ none
+tacacs-server host <some host ip address>
+tacacs-server key <some key>
+
+3). Canned configuration for network access authorization. This config
+allows "fred" to login to line 1 with password abcdef (or to and to
+run ppp using chap authentication. The chap password is "lab".
+
+DAEMON:
+
+key = <some key>
+
+# repeat as necessary for each user
+user = fred {
+   login = cleartext abcdef
+   chap = cleartext lab
+   service = ppp protocol = ip {
+	addr=1.0.0.2
+    }
+}
+
+NAS:
+
+aaa new-model
+! authenticate exec logins (if not autoselecting)
+aaa authentication login default tacacs+
+! authorize network services via tacacs+
+aaa authorization network tacacs+
+! use tacacs+ for authenticating ppp users
+aaa authentication ppp default tacacs+
+tacacs-server host <some host ip address>
+tacacs-server key <some key>
+interface Async1
+ip address 1.0.0.1 255.0.0.0
+async default ip address 172.21.14.55
+encapsulation ppp
+async dynamic address
+async mode interactive
+! use chap to authenticate ppp users
+ppp authentication chap
+line 1
+! need "modem inout" here and flow control if using a modem
+
+4). Canned configuration for ARAP.
+
+NAS:
+
+aaa new-model
+aaa authentication arap default guest tacacs+
+aaa authorization network tacacs+
+aaa accounting network start-stop tacacs+
+!
+appletalk routing
+arap network <number> <name>
+!
+interface Ethernet0
+ appletalk cable-range <range>
+ appletalk zone <zonename>
+!
+tacacs-server host <host>
+tacacs-server key <key>
+!
+line 1
+ location a modem
+ modem answer-timeout 0
+ modem InOut
+ autoselect arap
+ autoselect during-login
+ arap enable
+ speed <speed>
+ flowcontrol hardware
+
+Daemon:
+
+key = "some key"
+
+user = lol {
+    arap = cleartext <arap secret>
+    service = arap { }
+}
+
+Authorization AV pairs
+----------------------
+The following authorization AV pairs are supported by 10.3(3) onwards
+except where specifically noted.
+
+The following AV pairs specify which service is being authorized. They
+are typically accompanied by protocol AV pairs and other, additional
+pairs from the lists below.
+
+service=arap
+service=shell (for exec startup, and also for command authorizations)
+service=ppp
+service=slip
+
+service=system (not used).
+
+service=raccess
+	Used for managing reverse telnet connections e.g.
+
+	user = jim {
+	    login = cleartext lab
+	    service = raccess {
+	        port#1 = nasname1/tty2
+	        port#2 = nasname2/tty5
+	    }
+	}
+
+	Requires IOS configuration
+
+		aaa authorization reverse-access tacacs+
+
+	See the IOS docs for more details.
+
+protocol=lcp
+	The lower layer of PPP, always brought up before IP, IPX, etc.
+	is brought up.
+
+protocol=ip
+	Used with service=ppp and service=slip to indicate which
+	protocol layer is being authorized.
+
+
+protocol=ipx
+	Used with service=ppp to indicate which protocol layer
+	is being authorized.
+
+protocol=atalk
+	with service=ppp or service=arap
+
+protocol=vines
+	For vines over ppp.
+
+protocol=ccp
+	Authorization of CCP.  Compression Control Protocol). No other
+	av-pairs associated with this.
+
+protocol=cdp
+	Authorization of CDP (Cisco Discovery Protocol). No other
+	av-pairs associated with this.
+
+protocol=multilink
+	Authorization of multilink PPP. See 'max-links' and 'load-threshold'.
+
+protocol=unknown
+	For undefined/unsupported conditions. Should not occur under
+	normal circumstances.
+
+cmd (EXEC)
+	If the value of cmd is NULL e.g. the AV pair is cmd=, then
+	this is an authorization request for starting an exec.
+
+	If cmd is non-null, this is a command authorization request,
+	It contains the name of the command being authorized
+	e.g. cmd=telnet
+
+cmd-arg (EXEC)
+	During command authorization, the name of the command is given
+	by an accompanying "cmd=" AV pair, and each command argument
+	is represented by a cmd-arg AV pair e.g. cmd-arg=archie.sura.net
+
+	NOTE: 'cmd-arg' should never appear in a configuration file.
+	It is used internally by the daemon to construct a string
+	which is then matched against the regular expressions which appear
+	in a cmd clause in the configuration file.
+
+acl (ARAP, EXEC)
+	For ARAP this contains an access-list number.  For EXEC
+	authorization it contains an access-class number, e.g. acl=2.
+	which is applied to the line as the output access class equivalent
+	to the configuration command
+
+		line <n>
+		access-class 2 out
+
+	An outbound access-class is the best way to restrict outgoing telnet
+	connections. Note that a suitable access list (in this case,
+	numbered 2) must be predefined on the NAS.
+
+inacl (PPP/IP/IPX)
+	This AV pair contains an IP or IPX input access list number
+	for slip or PPP e.g. inacl=2. The access list itself must be
+	pre-configured on the Cisco box. Per-user access lists do not
+	work with ISDN interfaces unless you also configure a virtual
+	interface. After 11.2(5.1)F, you can also use the name of a
+	predefined named access list, instead of a number, for the
+	value of this attribute.
+
+	Note: For IPX, inacl is only valid after 11.2(4)F.
+
+inacl#<n> (PPP/IP, PPP/IPX, 11.2(4)F)
+	This AV pair contains the definition of an input access list
+	to be installed and applied to an interface for the duration
+	of the current connection, e.g.
+
+	inacl#1="permit ip any any precedence immediate"
+	inacl#2="deny igrp 0.0.1.2 255.255.0.0 any"
+
+	Attributes are sorted numerically before they are applied.
+	For IP, standard OR extended access list syntax may be used,
+	but it is an error to mix the two within a given access-list.
+
+	For IPX, only extended access list syntax may be used.
+
+	See also:
+	sho ip access-lists
+	sho ip interface
+	sho ipx access-lists
+	sho ipx interface
+	debug aaa author
+	debug aaa per-user
+
+outacl (PPP/IP, PPP/IPX)
+	This AV pair contains an IP or IPX output access list number
+	for SLIP. PPP/IP or PPP/IPX connections e.g. outacl=4. The
+	access list itself must be pre-configured on the Cisco
+	box. Per-user access lists do not work with ISDN interfaces
+	unless you also configure a virtual interface.  PPP/IPX is
+	supported in 11.1 onwards only. After 11.2(5.1)F, you can also
+	use the name of a predefined named access list, as well as a
+	number, for the value of this attribute.
+
+
+outacl#<n> (PPP/IP, PPP/IPX, 11.2(4)F)
+	This AV pair contains an output access list definition to be
+	installed and applied to an interface for the duration of the
+	current connection, e.g.
+
+	outacl#1="permit ip any any precedence immediate"
+	outacl#2="deny igrp 0.0.9.10 255.255.0.0 any"
+
+	Attributes are sorted numerically before they are applied.
+	For IP, standard OR extended access list syntax may be used,
+	but it is an error to mix the two within a given access-list.
+
+	For IPX, only extended access list syntax may be used.
+
+	See also:
+	sho ip access-lists
+	sho ip interface
+	sho ipx access-lists
+	sho ipx interface
+	debug aaa author
+	debug aaa per-user
+
+addr (SLIP, PPP/IP)
+	The IP address the remote host should be assigned when a slip
+	or PPP/IP connection is made e.g. addr=1.2.3.4
+
+routing (SLIP, PPP/IP)
+	Equivalent to the /routing flag in slip and ppp commands. Can
+	have as its value the string "true" or "false".
+
+timeout (11.0 onwards, ARAP, EXEC)
+	Sets the time until an arap or exec session disconnects
+	unconditionally (in minutes), e.g. timeout=60
+
+autocmd (EXEC)
+	During exec startup, this specifies an autocommand, like the
+	autocommand option to the username configuration command,
+	e.g. autocmd="telnet foo.com"
+
+noescape (EXEC)
+	During exec startup, this specifies "noescape", like the
+	noescape option to the username configuration command.  Can
+	have as its value the string "true" or "false",
+	e.g. noescape=true
+
+nohangup (EXEC)
+	During exec startup, this specifies "nohangup", like the
+	nohangup option to the username configuration command.  Can
+	have as its value the string "true" or "false",
+	e.g. nohangup=true
+
+priv-lvl (EXEC)
+	Specifies the current privilege level for command
+	authorizations, a number from zero to 15 e.g. priv_lvl=5.
+
+	Note: in 10.3 this attribute was priv_lvl i.e.
+	it contained an underscore instead of a hyphen.
+
+zonelist (ARAP)
+	An Appletalk zonelist for arap equivalent to the line
+	configuration command "arap zonelist" e.g. zonelist=5
+
+addr-pool (11.0 onwards, PPP/IP, SLIP)
+	This AV pair specifies the name of a local pool from which to
+	get the IP address of the remote host.
+
+	Note: addr-pool works in conjunction with local pooling.  It
+	specifies the name of a local pool (which needs to be
+	pre-configured on the NAS). Use the ip-local pool command to
+	declare local pools, e.g on the NAS:
+
+	ip address-pool local
+	ip local pool foo 1.0.0.1 1.0.0.10
+	ip local pool baz 2.0.0.1 2.0.0.20
+
+	then you can use Tacacs+ to return addr-pool=foo or
+	addr-pool=baz to indicate which address pool you want to get
+	this remote node's address from, e.g. on the daemon:
+
+	user = lol {
+	    service = ppp protocol = ip {
+	        addr-pool=foo
+	    }
+	}
+
+route (11.1 onwards, PPP/IP, SLIP).
+	This AV pair specifies a route to be applied to an interface.
+
+	During network authorization, the "route" attribute may be
+	used to specify a per-user static route, to be installed via
+	Tacacs+.
+
+	The daemon side declaration is:
+
+	service=ppp protocol=ip {
+	    route="<dst_addr> <mask> [ <gateway> ]"
+	}
+
+	This indicates a temporary static route that is to be
+	applied. "<dst_address>, <mask> and [<gateway>]" are expected
+	to be in the usual dotted-decimal notation, with meanings the
+	same as for the familiar "ip route" configuration command on a
+	NAS.
+
+	If gateway is omitted, the peer's address is taken to be the gateway.
+
+	The route is expunged once the connection terminates.
+
+route#<n> (PPP/IP/IPX, 11.2(4)F)
+	Same as the "route" attribute, except that these are valid for
+	IPX as well as IP, and they are numbered, allowing multiple
+	routes to be applied e.g.
+
+	route#1="3.0.0.0 255.0.0.0 1.2.3.4"
+	route#2="4.0.0.0 255.0.0.0"
+
+
+	or, for IPX,
+
+	route#1="4C000000 ff000000 30.12.3.4"
+	route#2="5C000000 ff000000 30.12.3.5"
+
+	See also:
+	sho ip route
+	sho ipx route
+	debug aaa author
+	debug aaa per-user
+
+callback-rotary (11.1 onwards, valid for ARAP, EXEC, SLIP or PPP)
+	The number of a rotary group (between 0 and 100 inclusive)
+	to use for callback e.g. callback-rotary=34. Not valid for ISDN.
+
+callback-dialstring (11.1 onwards, valid for ARAP, EXEC, SLIP or PPP)
+	sets the telephone number for a callback e.g.
+	callback-dialstring=408-555-1212. Not valid for ISDN.
+
+callback-line (11.1 onwards, valid for ARAP, EXEC, SLIP or PPP)
+	The number of a tty line to use for callback e.g.
+	callback-line=4. Not valid for ISDN.
+
+nocallback-verify (11.1 onwards, valid for ARAP, EXEC)
+	Indicates that no callback verification is required. The only
+	valid value for this parameter is the digit one i.e.
+	nocallback-verify=1. Not valid for ISDN.
+
+idletime (11.1 onwards, EXEC)
+	Sets a value, in minutes, after which an IDLE session will be
+	terminated. N.B. Does NOT work for PPP.
+
+tunnel-id (11.2 onwards, PPP/VPDN)
+	This AV pair specifies the username that will be used to
+	authenticate the tunnel over which the individual user MID
+	will be projected.  This is analogous to the "NAS name" in the
+	"vpdn outgoing" command.
+
+ip-addresses (11.2 onwards, PPP/VPDN)
+	This is a space separated list of possible IP addresses that
+	can be used for the end-point of the tunnel.
+
+	In 11.2(5.4)F, this attribute was extended as follows:
+
+	1) comma (',') is also consider as a delimiter
+	For example the avpair can now be written as
+
+  	ip-addresses = 172.21.9.26,172.21.9.15,172.21.9.4
+
+	2) '/' is considered a priority delimiter. When you have a
+	number of Home Gateway routers, it is desirable to consider some
+	as the primary routers and some as backup routers.
+
+	The '/' allow you to config the routers into priority groups,
+	so that the NAS will try to forward the users to the high
+	priority routers, before forwarding to the low priority one.
+
+	For example in the following avpair:
+
+ 	ip-addresses = "172.21.9.26 / 172.21.9.15 / 172.21.9.4"
+
+	172.21.9.26 is considered to be priority 1
+	172.21.9.15 is considered to be priority 2
+	172.21.9.4  is considered to be priority 3
+
+	The NAS will try to forward the users to 172.21.9.26, before
+	trying 172.21.9.15.  If the NAS can't forward users to
+	172.21.9.26, it will try 172.21.9.15 next. If it fails with
+	172.21.9.15, it will then try forwarding to 172.21.9.4.
+
+source-ip (PPP/VPDN, now deprecated, only existed in releases 11.2(1.4)
+	thru 11.2(4.0.2)). This specifies a single ip address will be
+	used as the source of all VPDN packets generated as part of
+	the VPDN tunnel (see the equivalent source-ip keyword in the
+	IOS vpdn outgoing command).
+
+nas-password (PPP/VPDN, 11.2(3.4)F, 11.2(4.0.2)F)
+	During L2F tunnel authentication, nas-password specifies the password
+	for the NAS.
+
+gw-password (PPP/VPDN, 11.2(3.4)F, 11.2(4.0.2)F)
+	During L2F tunnel authentication, gw-password specifies the password
+	for the home gateway.
+
+rte-ftr-in#<n> (PPP -- IP/IPX, 11.2(4)F)
+	This AV pair specifies an input access list definition to be
+	installed and applied to routing updates on the current
+	interface, for the duration of the current connection.
+
+	For IP, both standard and extended Cisco access list syntax is
+	recognised, but it is an error to mix the two within a given
+	access-list.
+
+	For IPX, only Cisco extended access list syntax is legal.
+
+	Attributes are sorted numerically before being applied.  For
+	IP, the first attribute must contain the name of a routing
+	process and its identifier (except for rip, where no
+	identifier is needed), e.g.
+
+	rte-fltr-in#0="router igrp 60"
+	rte-fltr-in#1="permit 0.0.3.4 255.255.0.0"
+	rte-fltr-in#2="deny any"
+
+	For IPX, no routing process is needed, e.g.
+
+	rte-fltr-in#1="deny 3C01.0000.0000.0001"
+	rte-fltr-in#2="deny 4C01.0000.0000.0002"
+
+	See also:
+
+	show ip access-lists
+	show ip protocols
+	sho ipx access-lists
+	sho ipx interface
+	debug aaa author
+	debug aaa per-user
+
+	Related IOS commands:
+	IP:
+		router <routing process identifier>
+		[no] distribute-list <list-name> in <interface>
+
+	IPX:
+		ipx input-network-filter <access-list-number>
+
+
+rte-ftr-out#<n> (PPP/IP, 11.2(4)F)
+	This AV pair specifies an input access list definition to be
+	installed and applied to routing updates on the current
+	interface, for the duration of the current connection.
+
+	For IP, both standard and extended Cisco access list syntax is
+	recognised, but it is an error to mix the two within a given
+	access-list.
+
+	Attributes are sorted numerically before being applied.  The
+	first attribute must contain the name of a routing process and
+	its identifier (except for rip, where no identifier is
+	needed), e.g.
+
+	rte-fltr-out#0="router igrp 60"
+	rte-fltr-out#3="permit 0.0.5.6 255.255.0.0"
+	rte-fltr-out#4="permit any"
+
+	For IPX, no routing process is specified, e.g.
+
+	rte-fltr-out#1="deny 3C01.0000.0000.0001"
+	rte-fltr-out#2="deny 4C01.0000.0000.0002"
+
+	See also:
+
+	sho ipx access-lists
+	sho ipx interface
+	show ip access-lists
+	show ip protocols
+	debug aaa author
+	debug aaa per-user
+
+	Related IOS commands:
+	IP:
+		router <routing process identifier>
+		[no] distribute-list <list-name> in <interface>
+
+	IPX:
+		ipx output-network-filter <access-list-number>
+
+
+sap#<n> (11.2(4)F PPP/IPX)
+	This AV pair specifies static saps to be installed for the duration
+	of a connection e.g.
+
+        sap#1="4 CE1-LAB 1234.0000.0000.0001 451 4"
+        sap#2="5 CE3-LAB 2345.0000.0000.0001 452 5"
+
+	The syntax of static saps is the same as that used by the IOS
+	"ipx sap" command.
+
+	See also:
+	sho ipx servers
+	debug aaa author
+	debug aaa per-user
+
+	Related IOS commands:
+	[no] ipx sap ....
+
+
+route#<n> (PPP/IP/IPX, 11.2(4)F)
+
+	Same as the "route" attribute, except that these are valid for
+	IPX as well as IP, and they are numbered, allowing multiple
+	routes to be applied e.g.
+
+	route#1="3.0.0.0 255.0.0.0 1.2.3.4"
+	route#2="4.0.0.0 255.0.0.0"
+
+
+	or, for IPX,
+
+	route#1="4C000000 ff000000 30.12.3.4"
+	route#2="5C000000 ff000000 30.12.3.5"
+
+	See also:
+	sho ip route
+	sho ipx route
+	debug aaa author
+	debug aaa per-user
+
+
+sap-fltr-in#<n> (PPP/IPX, 11.2(4)F)
+	This AV pair specifies an input sap filter access list
+	definition to be installed and applied on the current
+	interface, for the duration of the current connection.
+
+	Only Cisco extended access list syntax is legal, e.g
+
+	sap-fltr-in#1="deny 6C01.0000.0000.0001"
+	sap-fltr-in#2="permit -1"
+
+	Attributes are sorted numerically before being applied.
+
+	sho ipx access-lists
+	sho ipx interface
+	debug aaa author
+	debug aaa per-user
+
+	[no] ipx input-sap-filter <number>
+
+
+sap-fltr-out#<n> (PPP/IPX 11.2(4)F)
+	This AV pair specifies an output sap filter access list
+	definition to be installed and applied on the current
+	interface, for the duration of the current connection.
+
+	Only Cisco extended access list syntax is legal, e.g
+
+	sap-fltr-out#1="deny 6C01.0000.0000.0001"
+	sap-fltr-out#2="permit -1"
+
+	Attributes are sorted numerically before being applied.
+
+	sho ipx access-lists
+	sho ipx interface
+	debug aaa author
+	debug aaa per-user
+
+	[no] ipx output-sap-filter <number>
+
+
+
+pool-def#<n> (PPP/IP, 11.2(4)F)
+	This attribute is used to define ip address pools on the NAS.
+
+	During IPCP address negotiation, if an ip pool name is
+	specified for a user (see the addr-pool attribute), a check is
+	made to see if the named pool is defined on the NAS. If it is,
+	the pool is consulted for an ip address.
+
+	If the required pool is not present on the NAS (either in the
+	local config, or as a result of a previous download
+	operation), then an authorization call to obtain it is
+	attempted, using the special username:
+
+	    <nas-name>-pools
+
+	where <nas-name> is the configured name of the NAS.
+
+	Note: This username can be changed using the IOS configuration
+	directive e.g.
+
+	    aaa configuration config-name nas1-pools-definition.cisco.us
+
+	The pool-def attribute is used to define ip address pools for
+	the above authorization call e.g.
+
+	user = foo {
+	    login = cleartext lab
+	    service = ppp protocol = ip {
+		addr-pool=bbb
+	    }
+	}
+
+	user = nas1-pools {
+	     service = ppp protocol = ip {
+	        pool-def#1 = "aaa 1.0.0.1 1.0.0.3"
+	        pool-def#2 = "bbb 2.0.0.1 2.0.0.10"
+	        pool-def#3 = "ccc 3.0.0.1 3.0.0.20"
+	        pool-timeout=60
+	     }
+	}
+
+
+	In the example above is a configuration file fragment for defining 3
+	pools named "aaa", "bbb" and "ccc" on the NAS named "nas1".
+
+	When the user "foo" refers to the pool named "bbb", if the
+	pool "bbb" isn't defined, the NAS will attempt to download the
+	definition contained in the "nas1-pools" entry.
+
+	The other pools will also be defined at the same time (or they
+	will be ignored if they are already defined).
+
+	Since this procedure is only activated when an undefined pool
+	is referenced, one way to redefine a pool once it has been
+	downloaded is to manually delete the definition e.g. by
+	logging into the NAS, enabling, and configuring:
+
+	config t
+	no ip local pool bbb
+	^Z
+
+	When a pool is deleted, there is no interruption in service
+	for any user who is currently using a pool address. If a pool
+	is deleted and then subsequently redefined to include a pool
+	address that was previously allocated, the new pool will pick
+	up the allocated address and track it as expected.
+
+	Since downloaded pools do not appear in the NAS configuration,
+	any downloaded pool definitions automatically disappear
+	whenever a NAS reboots. These pools are marked as "dynamic"
+	when they appear in the output of the "show ip local pools"
+	NAS command.
+
+	Since it is desirable not to have to manually delete pools to
+	redefine them, the AV pair pool-timeout=<n> can be used to
+	timeout any downloaded pool definitions. The timeout <n> is in
+	minutes.
+
+	The effect of the pool-timeout attribute is to start a timer
+	when the pool definitions are downloaded.  When the timer
+	expires, the pools are deleted. The next reference to a
+	deleted pool via will cause a re-fetch of the pool
+	definitions.  This allows pool changes to be made on the
+	daemon and propagated to the NAS in a timely manner.
+
+	See also:
+
+	sho ip local pool
+	sho ip local pool <pool-name>
+
+	IOS commands:
+
+	ip local pool <name> <start address> <end address>
+
+
+old-prompts (PPP/SLIP)
+	This attribute is integrated into the following IOS images:
+
+	11.2(7.4)P 11.2(7.4) 11.1(13.1) 11.(16.2) 11.1(13.1)AA
+	11.1(13.1)CA 11.1(13.1)IA 11.2(8.0.1)F 11.0(16.2)BT)
+
+	This attribute allows providers to make the prompts in T+
+	appear identical to those of earlier systems (tacacs and
+	xtacacs). This will allow administrators to upgrade from
+	tacacs/xtacacs to T+ transparently to users.
+
+	The difference between the prompts is as follows:
+
+	In xtacacs, when the user types "slip" or "ppp" the system
+	prompts for an address followed by a password, whereas T+
+	prompts only for an address.
+
+	In xtacacs, if the user types "slip host" or "ppp host", the
+	system prompts for a password. In T+, there is no prompt.
+
+	Using this attribute, T+ can be made to mimic the prompting
+	behaviour of xtacacs, by configuring network authorization on
+	IOS, and using the "old-prompts=true" attribute value pair for
+	slip and ppp/ip, viz:
+
+	user = joe {
+	    global = cleartext foo
+
+	    service = exec {
+	    }
+	    service = slip {
+	        default attribute = permit
+	 	old-prompts=true
+	    }
+	    service = ppp protocol = ip {
+	        default attribute = permit
+	        old-prompts=true
+	    }
+	}
+
+	i.e. the prompts are controlled by the addition of the
+	"old-prompts=true" attribute.
+
+
+max-links (PPP/multilink - Multilink parameter; 11.3)
+	This AV pair restricts the number of multilink bundle links
+	that a user can have.
+
+	The daemon side declaration is:
+
+	service=ppp protocol=multilink {
+	    max-links=<n>
+	}
+
+	The range of <n> is [1-255].
+
+	Related NAS commands:
+	int <foo>
+	  [no] ppp multilink
+        int virtual-template X
+          multilink max-links <n>
+
+	show ppp multilink
+	debug multilink
+
+load-threshold (PPP/multilink - Multilink parameter; 11.3)
+	This AV pair sets the load threshold at which an additional
+	multilink link is added to the bundle (if load goes above) or
+	deleted (if load goes below).
+
+	The daemon side declaration is:
+
+	service=ppp protocol=multilink {
+	    load-threshold=<n>
+	}
+
+	The range of <n> is [1-255].
+
+	Related NAS commands:
+	int <foo>
+	  [no] ppp multilink
+        int virtual-template X
+          multilink load-threshold <n>
+
+	show ppp multilink
+	debug multilink
+
+
+Reserved for future use:
+
+ppp-vj-slot-compression
+link-compression
+asyncmap
+x25-addresses (PPP/VPDN)
+frame-relay (PPP/VPDN)
+
+

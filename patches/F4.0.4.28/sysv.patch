@@ -1,0 +1,60 @@
+--- tacacs-F4.0.4.28-orig/tac_plus.sysvinit	1969-12-31 16:00:00.000000000 -0800
++++ tacacs-F4.0.4.28/tac_plus.sysvinit	2018-05-29 10:45:09.406416000 -0700
+@@ -0,0 +1,57 @@
++#!/bin/bash
++#
++# /etc/rc.d/init.d/tac_plus
++#
++# chkconfig: 2345 86 14
++# description: TACACS+ Daemon
++
++# Define variables
++CORE_DUMP=1  # Lets always coredump
++TACPLUS_BIN=/usr/sbin/tac_plus
++TACPLUS_OPTS=""
++TACPLUS_CONF=/etc/tac_plus.conf
++
++# Source function library.
++. /etc/rc.d/init.d/functions
++
++if [ $CORE_DUMP -ne 0 ]; then
++  ulimit -c unlimited
++  export DAEMON_COREFILE_LIMIT='unlimited'
++fi
++
++RETVAL=0
++prog="tac_plus"
++
++case "$1" in
++  start)
++        # Got Config File?
++        [ -f /etc/tac_plus.conf ] || exit 69
++
++        echo -n $"Starting $prog: "
++        daemon $TACPLUS_BIN -C $TACPLUS_CONF $TACPLUS_OPTS
++        RETVAL=$?
++        [ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
++        echo
++        ;;
++  stop)
++        echo -n $"Shutting down $prog: "
++        killproc $prog
++        RETVAL=$?
++        [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/$prog
++        echo
++        ;;
++  restart|reload)
++        $0 stop
++        $0 start
++        RETVAL=$?
++        ;;
++  status)
++        status $prog
++        RETVAL=$?
++        ;;
++  *)
++        echo $"Usage: $0 {start|stop|restart|reload|status}"
++        exit 2
++esac
++
++exit $RETVAL

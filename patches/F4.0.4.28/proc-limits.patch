@@ -1,0 +1,815 @@
+diff -u tacacs-F4.0.4.28-orig/config.c tacacs-F4.0.4.28/config.c
+--- tacacs-F4.0.4.28-orig/config.c	2012-06-06 15:11:30.000000000 -0700
++++ tacacs-F4.0.4.28/config.c	2018-05-24 14:26:31.315047000 -0700
+@@ -42,7 +42,9 @@
+ 				accounting file = <filename> |
+ 				accounting syslog |
+ 				key = <string> |
+-				logging = <syslog_fac>
++				logging = <syslog_fac> |
++        maxprocs = <maxprocs> |
++        maxprocsperclt = <maxprocsperclt>
+ 
+    <authen_default>	:=	default authentication = file <filename>
+ 
+@@ -132,6 +134,11 @@
+ static int sym_error = 0;			/* a parsing error occurred */
+ static char *authen_default = NULL;	/* top level authentication default */
+ static char *nopasswd_str = "nopassword";
++static long int maxprocs = TAC_MAX_PROCS; /* max procs to fork */
++static long int maxprocsperclt = TAC_MAX_PROCS_PER_CLIENT; /* max per client */
++static long int readtimeout = TAC_PLUS_READ_TIMEOUT; /* read timeout */
++static long int writetimeout = TAC_PLUS_WRITE_TIMEOUT; /* write timeout */
++static long int accepttimeout = TAC_PLUS_ACCEPT_TIMEOUT; /* accept timeout */
+ 
+ /*
+  * A host definition structure.
+@@ -822,6 +829,66 @@
+ 	    sym_get();
+ 	    continue;
+ 
++  case S_maxprocs:
++        parse(S_maxprocs);
++  		  parse(S_separator);
++        errno = 0;
++        maxprocs = strtol(tac_strdup(sym_buf), NULL, 10);
++        if ((errno) || (maxprocs < 0)) {
++          parse_error("maxprocs must a valid positive integer");
++          return 1;
++        }
++        sym_get();
++        continue;
++
++    case S_maxprocsperclt:
++        parse(S_maxprocsperclt);
++        parse(S_separator);
++        errno = 0;
++        maxprocsperclt = strtol(tac_strdup(sym_buf), NULL, 10);
++        if ((errno) || (maxprocsperclt < 0)) {
++          parse_error("maxprocsperclt must a valid positive integer");
++          return 1;
++        }
++        sym_get();
++        continue;
++
++    case S_readtimeout:
++        parse(S_readtimeout);
++        parse(S_separator);
++        errno = 0;
++        readtimeout = strtol(tac_strdup(sym_buf), NULL, 10);
++        if ((errno) || (readtimeout < 0)) {
++          parse_error("readtimeout must a valid positive integer");
++          return 1;
++        }
++        sym_get();
++        continue;
++
++    case S_writetimeout:
++        parse(S_writetimeout);
++        parse(S_separator);
++        errno = 0;
++        writetimeout = strtol(tac_strdup(sym_buf), NULL, 10);
++        if ((errno) || (writetimeout < 0)) {
++          parse_error("writetimeout must a valid positive integer");
++          return 1;
++        }
++        sym_get();
++        continue;
++
++    case S_accepttimeout:
++        parse(S_accepttimeout);
++        parse(S_separator);
++        errno = 0;
++        accepttimeout = strtol(tac_strdup(sym_buf), NULL, 10);
++        if ((errno) || (accepttimeout < 0)) {
++          parse_error("accepttimeout must a valid positive integer");
++          return 1;
++        }
++        sym_get();
++        continue;
++
+ 	case S_host:
+ 	    parse_host();
+ 	    continue;
+@@ -2156,7 +2223,7 @@
+     return(cfg_get_pvalue(user, TAC_IS_USER, S_login, recurse));
+ }
+ 
+-#ifdef UENABLE 
++#ifdef UENABLE
+ /*
+  * return value of the noenablepwd field.  If none, try groups the user is a
+  * member of, and so on, recursively if recurse is non-zero.
+@@ -2462,6 +2529,36 @@
+     }
+ }
+ 
++int
++cfg_get_maxprocs(void)
++{
++    return(maxprocs);
++}
++
++int
++cfg_get_maxprocsperclt(void)
++{
++    return(maxprocsperclt);
++}
++
++int
++cfg_get_readtimeout(void)
++{
++    return(readtimeout);
++}
++
++int
++cfg_get_writetimeout(void)
++{
++    return(writetimeout);
++}
++
++int
++cfg_get_accepttimeout(void)
++{
++    return(accepttimeout);
++}
++
+ char *
+ cfg_get_authen_default(void)
+ {
+diff -u tacacs-F4.0.4.28-orig/hash.c tacacs-F4.0.4.28/hash.c
+--- tacacs-F4.0.4.28-orig/hash.c	2009-07-30 11:17:55.000000000 -0700
++++ tacacs-F4.0.4.28/hash.c	2018-05-24 15:04:21.730920000 -0700
+@@ -20,6 +20,9 @@
+  */
+ 
+ #include "tac_plus.h"
++#include <stdlib.h>
++#include <unistd.h>
++#include <stdio.h>
+ 
+ struct entry {
+     char *name;
+@@ -27,22 +30,16 @@
+ };
+ typedef struct entry ENTRY;
+ 
+-static int calculate_hash(char *);
+-
+-/* Calculate hash value from a string */
+-static int
++/* djb hashing function */
++static unsigned long
+ calculate_hash(char *name)
+ {
+-    int i;
+-    int len = strlen(name);
+-    int hashval = 0;
++  unsigned long hash = 5381;
++  int c;
+ 
+-    for (i = 0; i < len; i++) {
+-	hashval += name[i] * (i + 1);
+-    }
+-    hashval += name[0];
+-    hashval = hashval > 0 ? hashval : -hashval;
+-    return(hashval);
++  while (c = *name++)
++    hash = ((hash >> 5) + hash) + c; /* hash * 33 + c */
++  return hash;
+ }
+ 
+ /* Lookup a name in a hash table.  Return its node if it exists, else NULL */
+@@ -50,15 +47,15 @@
+ hash_lookup(void **hashtab, char *name)
+ {
+     ENTRY *entry;
+-    int hashval = calculate_hash(name);
+-
+-    entry = hashtab[hashval % HASH_TAB_SIZE];
++    unsigned long hashval = calculate_hash(name);
++    int hashslot = hashval % HASH_TAB_SIZE;
++    entry = hashtab[hashslot];
+ 
+     while (entry) {
+-	if (STREQ(name, entry->name))
++      if (STREQ(name, entry->name))
+ 	    /* Node exists in table. return it */
+-	    return(entry);
+-	entry = entry->hash;
++        return(entry);
++	    entry = entry->hash;
+     }
+     return(NULL);
+ }
+@@ -68,19 +65,55 @@
+ hash_add_entry(void **hashtab, struct entry *newentry)
+ {
+     ENTRY *entry;
+-    int hashval;
++    unsigned long hashval;
++    int hashslot;
+ 
+     entry = hash_lookup(hashtab, newentry->name);
+     if (entry)
+-	return(entry);
++      return(entry);
+ 
+     /* Node does not exist in table. Add it */
+     hashval = calculate_hash(newentry->name);
+-    newentry->hash = hashtab[hashval % HASH_TAB_SIZE];
+-    hashtab[hashval % HASH_TAB_SIZE] = newentry;
++    hashslot = hashval % HASH_TAB_SIZE;
++    newentry->hash = hashtab[hashslot];
++    hashtab[hashslot] = newentry;
+     return(NULL);
+ }
+ 
++void * hash_delete_entry(void **hashtab, char *entry_name) {
++  ENTRY *entry;
++  ENTRY *tentry;
++  unsigned long hashval = calculate_hash(entry_name);
++  int hashslot = hashval % HASH_TAB_SIZE;
++  struct entry *last_entry = NULL;
++
++  entry = hashtab[hashslot];
++  while (entry) {
++    if (STREQ(entry_name, entry->name)) {
++      if ((last_entry == NULL) && (entry->hash == NULL)) {
++        /* the hash slot is empty so we can set it to null */
++        hashtab[hashslot] = NULL;
++      } else if ((last_entry != NULL) && (entry->hash != NULL)) {
++        /* we need to attach the previous entry to the next one
++         * so we can remove this one */
++        last_entry->hash = entry->hash;
++      } else if (last_entry == NULL) {
++        /* first entry so we need to advance the hash slot to the next one*/
++        hashtab[hashslot] = entry->hash;
++      } else if (entry->hash == NULL) {
++        /* last entry in bucket so we need to null the next pointer in the previous entry */
++        last_entry->hash = NULL;
++      }
++      entry->hash = NULL;
++      return entry;
++    }
++    last_entry = entry;
++    entry = entry->hash;
++  }
++  /* we didn't find the entry */
++  return NULL;
++}
++
+ /* Return an array of pointers to all the entries in a hash table */
+ void **
+ hash_get_entries(void **hashtab)
+diff -u tacacs-F4.0.4.28-orig/Makefile.am tacacs-F4.0.4.28/Makefile.am
+--- tacacs-F4.0.4.28-orig/Makefile.am	2014-12-29 15:38:56.000000000 -0800
++++ tacacs-F4.0.4.28/Makefile.am	2018-05-24 14:19:35.805801000 -0700
+@@ -10,8 +10,8 @@
+ bin_PROGRAMS = tac_pwd
+ sbin_PROGRAMS = tac_plus
+ tac_pwd_SOURCES = tac_pwd.c
+-tac_plus_SOURCES = acct.c authen.c author.c choose_authen.c config.c \
+-	default_fn.c default_v0_fn.c do_acct.c do_author.c dump.c enable.c \
++tac_plus_SOURCES = acct.c authen.c author.c choose_authen.c client_count.c \
++  config.c default_fn.c default_v0_fn.c do_acct.c do_author.c dump.c enable.c \
+ 	encrypt.c expire.c hash.c maxsessint.c parse.c programs.c pw.c pwlib.c \
+ 	report.c sendauth.c sendpass.c tac_plus.c utils.c
+ if TACSKEY
+@@ -95,4 +95,3 @@
+ 	rm -f users_guide users_guide.tmp; \
+ 	$(auto_edit) $(srcdir)/users_guide.in >users_guide.tmp; \
+ 	mv users_guide.tmp users_guide
+-
+diff -u tacacs-F4.0.4.28-orig/tacacs.h tacacs-F4.0.4.28/tacacs.h
+--- tacacs-F4.0.4.28-orig/tacacs.h	2013-08-04 06:51:47.000000000 -0700
++++ tacacs-F4.0.4.28/tacacs.h	2018-05-24 14:58:35.469663000 -0700
+@@ -29,10 +29,11 @@
+ #define	TAC_PLUS_PORTSTR		"49"
+ #endif
+ 
+-#define TAC_PLUS_READ_TIMEOUT		180	/* seconds */
+-#define TAC_PLUS_WRITE_TIMEOUT		180	/* seconds */
+-#define TAC_PLUS_ACCEPT_TIMEOUT		15	/* seconds */
+-
++#define TAC_PLUS_READ_TIMEOUT		  180	/* seconds */
++#define TAC_PLUS_WRITE_TIMEOUT		180 /* seconds */
++#define TAC_PLUS_ACCEPT_TIMEOUT		180	/* seconds */
++#define TAC_MAX_PROCS            1024
++#define TAC_MAX_PROCS_PER_CLIENT   32
+ /*
+  * All tacacs+ packets have the same header format
+  *
+@@ -341,7 +342,7 @@
+ extern char *wtmpfile;
+ extern int wtmpfd;
+ 
+-#define HASH_TAB_SIZE 157        /* user and group hash table sizes */
++#define HASH_TAB_SIZE 65539        /* user and group hash table sizes */
+ 
+ struct acct {
+     u_char flags;
+diff -u tacacs-F4.0.4.28-orig/tac_plus.c tacacs-F4.0.4.28/tac_plus.c
+--- tacacs-F4.0.4.28-orig/tac_plus.c	2014-12-30 11:58:49.000000000 -0800
++++ tacacs-F4.0.4.28/tac_plus.c	2018-05-24 14:53:45.317635000 -0700
+@@ -60,6 +60,9 @@
+ int wtmpfd;			/* for wtmp file logging */
+ char *opt_Q;
+ char *opt_U;
++int total_child_count = 0;
++volatile sig_atomic_t dump_client_table = 0;
++volatile sig_atomic_t reap_children = 0;
+ char *wtmpfile = NULL;
+ char *bind_address = NULL;
+ 
+@@ -69,6 +72,8 @@
+ 
+ #define	PIDSZ	75
+ static char pidfilebuf[PIDSZ]; /* holds current name of the pidfile */
++#define MSGBUFSZ 1024
++static char msgbuf[MSGBUFSZ];
+ 
+ static RETSIGTYPE die(int);
+ static int get_socket(int **, int *);
+@@ -131,31 +136,49 @@
+ #endif
+ }
+ 
++static RETSIGTYPE
++dump_clients_handler(int signum)
++{
++  dump_client_table = 1;
++#ifdef REARMSIGNAL
++  signal(SIGUSR2, dump_clients_handler);
++#endif
++}
++
+ #if defined(REAPCHILD) && defined(REAPSIGIGN)
+-static
++
+ RETSIGTYPE
+ reapchild(int notused)
+ {
++  reap_children = 1;
++}
++#endif
++void
++reapchildren()
++{
+ #ifdef UNIONWAIT
+-    union wait status;
++  union wait status;
+ #else
+-    int status;
++  int status;
+ #endif
+ #if HAVE_PID_T
+-    pid_t pid;
++  pid_t pid;
+ #else
+-    int pid;
++  int pid;
+ #endif
++  int procs_for_client;
+ 
+-    for (;;) {
+-	pid = wait3(&status, WNOHANG, 0);
+-	if (pid <= 0)
+-	    return;
+-	if (debug & DEBUG_FORK_FLAG)
+-	    report(LOG_DEBUG, "%ld reaped", (long)pid);
+-    }
++  for (;;) {
++	   pid = waitpid(-1, &status, WNOHANG);
++	    if (pid <= 1)
++        return;
++      snprintf(msgbuf, MSGBUFSZ, "Clening up session for pid %lu", pid);
++      report(LOG_DEBUG, msgbuf);
++      procs_for_client = decrement_client_count_for_proc(pid);
++      total_child_count--;
++  }
++  reap_children = 0;
+ }
+-#endif /* REAPCHILD */
+ 
+ /*
+  * Return a socket bound to an appropriate port number/address. Exits
+@@ -294,6 +317,9 @@
+     memset(&session, 0, sizeof(session));
+     session.peer = tac_strdup("unknown");
+ 
++#if defined(REAPCHILD) && defined(REAPSIGIGN)
++    client_count_init();
++#endif
+     open_logfile();
+ 
+     if (argc <= 1) {
+@@ -380,6 +406,7 @@
+ 
+     signal(SIGUSR1, handler);
+     signal(SIGHUP, handler);
++    signal(SIGUSR2, dump_clients_handler);
+     signal(SIGTERM, die);
+     signal(SIGPIPE, SIG_IGN);
+ 
+@@ -624,10 +651,22 @@
+ 	socklen_t from_len;
+ 	int newsockfd = -1;
+ 	int flags, status;
++  int procs_for_client;
++
++#if defined(REAPCHILD) && defined(REAPSIGIGN)
++  if (reap_children)
++    reapchildren();
++#endif
+ 
+ 	if (reinitialize)
+ 	    init();
+ 
++  if (dump_client_table) {
++    report(LOG_ALERT, "Dumping Client Tables");
++    dump_client_tables();
++    dump_client_table = 0;
++  }
++
+ 	status = poll(pfds, ns, TAC_PLUS_ACCEPT_TIMEOUT * 1000);
+ 	if (status == 0)
+ 	    continue;
+@@ -678,11 +717,32 @@
+ 		   session.peer, newsockfd);
+ 
+ 	if (!single) {
++#if defined(REAPCHILD) && defined(REAPSIGIGN)
++      /* first we check the tocal process count to see if we are at the limit */
++      if (total_child_count >= cfg_get_maxprocs()) {
++        report(LOG_ALERT, "refused connection from %s [%s] at global max procs [%d]",
++          session.peer, session.peerip, total_child_count);
++        shutdown(newsockfd, 2);
++        close(newsockfd);
++        continue;
++      }
++      /* no we check the process count per client */
++      procs_for_client = get_client_count(session.peerip);
++      report(LOG_ALERT, "connection [%d] from %s [%s]", procs_for_client + 1, session.peer, session.peerip);
++      if (procs_for_client >= cfg_get_maxprocsperclt()) {
++        report(LOG_ALERT, "refused connection from %s [%s] at client max procs [%d]",
++          session.peer, session.peerip, procs_for_client);
++        shutdown(newsockfd, 2);
++        close(newsockfd);
++        continue;
++      }
++#endif
++
+ 	    pid = fork();
+ 
+ 	    if (pid < 0) {
+-		report(LOG_ERR, "fork error");
+-		tac_exit(1);
++        report(LOG_ERR, "fork error");
++        tac_exit(1);
+ 	    }
+ 	} else {
+ 	    pid = 0;
+@@ -723,6 +783,13 @@
+ 	    if (debug & DEBUG_FORK_FLAG)
+ 		report(LOG_DEBUG, "forked %ld", (long)pid);
+ 	    /* parent */
++#if defined(REAPCHILD) && defined(REAPSIGIGN)
++      total_child_count++;
++      procs_for_client = increment_client_count_for_proc(pid, session.peerip);
++      snprintf(msgbuf, MSGBUFSZ, "forked %lu for %s, procs %d, procs for client %d",
++            (long)pid, session.peerip, total_child_count, procs_for_client);
++		    report(LOG_DEBUG, msgbuf);
++#endif
+ 	    close(newsockfd);
+ 	}
+     }
+diff -u tacacs-F4.0.4.28-orig/tac_plus.h tacacs-F4.0.4.28/tac_plus.h
+--- tacacs-F4.0.4.28-orig/tac_plus.h	2012-04-10 12:38:45.000000000 -0700
++++ tacacs-F4.0.4.28/tac_plus.h	2018-05-24 14:57:35.983468000 -0700
+@@ -217,7 +217,7 @@
+ extern char *wtmpfile;
+ extern int wtmpfd;
+ 
+-#define HASH_TAB_SIZE 157        /* user and group hash table sizes */
++#define HASH_TAB_SIZE 65539        /* user and group hash table sizes */
+ 
+ struct acct {
+     u_char flags;
+@@ -361,9 +361,38 @@
+ /* hash.c */
+ struct entry;
+ void *hash_add_entry(void **, struct entry *);
++void *hash_update_entry(void**, struct entry *);
++void *hash_delete_entry(void**, char *);
+ void **hash_get_entries(void **);
+ void *hash_lookup(void **, char *);
+ 
++/* client_count.c */
++void client_count_init(void);
++int get_client_count(char* client_ip);
++int increment_client_count(char*);
++int decrement_client_count(char*);
++int decrement_client_count_for_proc(pid_t);
++int increment_client_count_for_proc(pid_t, char *);
++void remove_client_entry(char*);
++void remove_proc_entry(char*);
++void create_proc_client_map(pid_t, char*);
++void delete_proc_client_map(pid_t);
++void dump_client_tables();
++
++struct client_st {
++    char *name;     /* host name */
++    void *hash;     /* hash table next pointer */
++    int con_count;  /* count of connections from this peer */
++};
++typedef struct client_st CLIENT;
++
++struct proc_st {
++    char *name;     /* host name */
++    void *hash;     /* hash table next pointer */
++    char *client_ip; /* client ipv4 or ipv6 address */
++};
++typedef struct proc_st PROC_CLIENT;
++
+ /* config.c */
+ #ifdef ACLS
+ int	cfg_acl_check(char *, char *);
+--- tacacs-F4.0.4.28-orig/client_count.c	1969-12-31 16:00:00.000000000 -0800
++++ tacacs-F4.0.4.28/client_count.c	2018-05-24 14:17:13.000000000 -0700
+@@ -0,0 +1,178 @@
++#include "tac_plus.h"
++#include <stdlib.h>
++#include <unistd.h>
++#include <stdio.h>
++
++#define MSGBUFSZ 1024
++static char msgbuf[MSGBUFSZ];
++static void *client_table[HASH_TAB_SIZE];  /* Table of client declarations */
++static void *proc_table[HASH_TAB_SIZE];  /* Table of proc declarations */
++
++/* initialize the client table proc tables
++ * The client table stores the number of connections for
++ * each client ip.
++ * The proc table stores the link between process id and
++ * client ip. When a tacacs process dies, the parent only
++ * get the process id, so we need to link the two */
++
++void client_count_init(void) {
++  memset(proc_table, 0, sizeof(proc_table));
++  memset(client_table, 0, sizeof(client_table));
++}
++
++void remove_client_entry(char* client_ip)
++{
++  CLIENT *entry = (CLIENT *)hash_delete_entry(client_table, client_ip);
++  if (entry) {
++    if (entry->name)
++      free(entry->name);
++    free(entry);
++  }
++}
++
++void remove_proc_entry(char* proc_id)
++{
++  PROC_CLIENT *entry = (PROC_CLIENT *)hash_delete_entry(proc_table, proc_id);
++  if (entry) {
++    if (entry->name)
++      free(entry->name);
++    if (entry->client_ip)
++      free(entry->client_ip);
++    free(entry);
++  }
++}
++
++/* Map a process id to client IP address */
++void create_proc_client_map(pid_t process_id, char* client_ip)
++{
++  /* max size of a 64bit number is 19 chars */
++  char pid_str[20];
++  snprintf(pid_str, 20, "%d", process_id);
++  PROC_CLIENT *pc = (PROC_CLIENT *)tac_malloc(sizeof(PROC_CLIENT));
++  memset(pc, 0, sizeof(PROC_CLIENT));
++  pc->name = tac_strdup(pid_str);
++  pc->hash = NULL;
++  pc->client_ip = tac_strdup(client_ip);
++  hash_add_entry(proc_table, (void*)pc);
++}
++
++/* delete the mapping between process id and IP address */
++void delete_proc_client_map(pid_t process_id)
++{
++  char pid_str[20];
++  snprintf(pid_str, 20, "%d", process_id);
++  remove_proc_entry(pid_str);
++}
++
++/* get the client count for a given client ip */
++int get_client_count(char* client_ip)
++{
++  int count = 0;
++  /* now we see if there is a hash entry for this client_ip
++   * returns 0 if the client does not yet exist */
++  CLIENT *c = hash_lookup(client_table, client_ip);
++  if (c)
++    count = c->con_count;
++
++  return count;
++}
++
++/* increment the client counter for a client */
++int increment_client_count(char* client_ip)
++{
++  int count = get_client_count(client_ip);
++  /* create a new hash entry add it to the hash table */
++  CLIENT *nc = (CLIENT *)tac_malloc(sizeof(CLIENT));
++  memset(nc, 0, sizeof(CLIENT));
++  nc->name = tac_strdup(client_ip);
++  nc->hash = NULL;
++  nc->con_count = count + 1;
++  if (count) {
++    /* the hash does not support update, so we need to delete + add */
++    remove_client_entry(client_ip);
++  }
++  hash_add_entry(client_table, (void *)nc);
++  return nc->con_count;
++}
++
++char * get_client_ip_from_pid(pid_t process_id)
++{
++  char pid_str[20];
++  /* hashing only works in strings, so we convert here */
++  snprintf(pid_str, 20, "%d", process_id);
++  PROC_CLIENT *pc = hash_lookup(proc_table, pid_str);
++  if (pc) {
++    return pc->client_ip;
++  }
++}
++
++/* derement the client counter for a given client IP */
++int decrement_client_count(char* client_ip) {
++  CLIENT *nc;
++  int count = get_client_count(client_ip);
++  if (! count) {
++    return 0;
++  }
++  count--;
++  if (count >= 1) {
++    /* we update the existing hash entry if the count is still positive
++     * but the hash does not support update so we have to delete
++     * and then add */
++    CLIENT *nc = (CLIENT *)tac_malloc(sizeof(CLIENT));
++    memset(nc, 0, sizeof(CLIENT));
++    nc->name = tac_strdup(client_ip);
++    nc->hash = NULL;
++    nc->con_count = count;
++    remove_client_entry(client_ip);
++    hash_add_entry(client_table, (void *)nc);
++  } else if (count == 0) {
++    /* if it was the last client, we delete the entry */
++    remove_client_entry(client_ip);
++  }
++  return count;
++}
++
++int decrement_client_count_for_proc(pid_t process_id)
++{
++  int proc_count = 0;
++  char* client_ip = get_client_ip_from_pid(process_id);
++  if (client_ip) {
++    proc_count = decrement_client_count(client_ip);
++    snprintf(msgbuf, MSGBUFSZ, "Pid %lu Lowered Count for %s to %d",
++        process_id, client_ip, proc_count);
++    report(LOG_ALERT, msgbuf);
++    delete_proc_client_map(process_id);
++  } else {
++    snprintf(msgbuf, MSGBUFSZ, "Failed to find client ip for pid %lu", process_id);
++    report(LOG_ALERT, msgbuf);
++  }
++  return proc_count;
++}
++
++
++int increment_client_count_for_proc(pid_t process_id, char* client_ip)
++{
++  /* first we need to map pid to client_ip */
++ create_proc_client_map(process_id, client_ip);
++  /* now we inrement */
++  return increment_client_count(client_ip);
++}
++
++void dump_client_tables()
++{
++  CLIENT *cl;
++  PROC_CLIENT *pc;
++  CLIENT **clients = (CLIENT **) hash_get_entries(client_table);
++  PROC_CLIENT **procs = (PROC_CLIENT **) hash_get_entries(proc_table);
++  CLIENT **c;
++  PROC_CLIENT **p;
++
++  for (p = procs; *p; p++) {
++    pc = *p;
++    report(LOG_ALERT, "Proc: %s, IP: %s", pc->name, pc->client_ip);
++  }
++  for (c = clients; *c; c++) {
++    cl = *c;
++    report(LOG_ALERT, "Client: %s, Count: %d", cl->name, cl->con_count);
++  }
++}
+--- tacacs-F4.0.4.28-orig/hash_test.c	1969-12-31 16:00:00.000000000 -0800
++++ tacacs-F4.0.4.28/hash_test.c	2018-05-24 14:18:15.000000000 -0700
+@@ -0,0 +1,52 @@
++#include "tac_plus.h"
++#include <stdlib.h>
++#include <unistd.h>
++#include <stdio.h>
++#include <sys/socket.h>
++#include <netinet/in.h>
++#include <arpa/inet.h>
++
++int debug = 0;
++int console = 0;
++int single = 0;
++int inner_loop = 100000;
++int outer_loop = 10;
++
++int main (int argc, char **argv) {
++  int i, j;
++  int counter;
++  unsigned int lipaddr;
++  struct sockaddr_in sa;
++  char memcmd[1024];
++  char ip1[INET6_ADDRSTRLEN];
++  time_t t;
++  client_count_init();
++
++  srand((unsigned) time(&t));
++  setvbuf(stdout, NULL, _IONBF, 0);
++  snprintf(memcmd, 1024, "cat /proc/%d/statm", getpid());
++  printf("CMD: %s\n", memcmd);
++
++  for (i = 0; i < outer_loop; i++) {
++    printf ("Loop %d\nMemory: ", i);
++    system(memcmd);
++    for (j = 1; j <= inner_loop; j++) {
++      lipaddr = rand();
++      if (rand() % 2) {
++        inet_ntop(AF_INET, &lipaddr, ip1, sizeof(ip1));
++      } else {
++        inet_ntop(AF_INET6, &lipaddr, ip1, sizeof(ip1));
++      }
++      debug && printf("Increment %s, %d\n", ip1, j);
++      counter = increment_client_count_for_proc((pid_t)j, ip1);
++      debug && printf("Post Inc Count: %s, %d\n", ip1, counter);
++    }
++    for (j = inner_loop; j >= 1; j--) {
++      debug && printf("Decrement for proc %d\n", j);
++      counter = decrement_client_count_for_proc((pid_t)j);
++      debug && printf("Post Dec Counter: %d\n", counter);
++    }
++    dump_client_tables();
++  }
++  exit(0);
++}
+--- tacacs-F4.0.4.28-orig/parse.h	2018-05-24 15:23:53.754893000 -0700
++++ tacacs-F4.0.4.28/parse.h	2018-05-24 14:40:24.397619000 -0700
+@@ -91,3 +91,8 @@
+ #endif
+ #define	S_syslog	50
+ #define S_aceclnt	51
++#define S_maxprocs 52
++#define S_maxprocsperclt 53
++#define S_readtimeout 54
++#define S_writetimeout 55
++#define S_accepttimeout 56
+--- ../tacacs-F4.0.4.28-orig/parse.c	2018-05-29 11:13:17.881390000 -0700
++++ tacacs-F4.0.4.28/parse.c	2018-05-29 12:12:40.027352000 -0700
+@@ -121,6 +121,12 @@
+     declare("PAM", S_pam);
+ #endif
+     declare("syslog", S_syslog);
++    declare("maxprocs", S_maxprocs);
++    declare("maxprocsperclt", S_maxprocsperclt);
++    declare("readtimeout", S_readtimeout);
++    declare("writetimeout", S_writetimeout);
++    declare("accepttimeout", S_accepttimeout);
++
+ }
+ 
+ /* Return a keyword code if a keyword is recognized. 0 otherwise */
+@@ -266,5 +272,15 @@
+ #endif
+     case S_syslog:
+ 	return("syslog");
++    case S_maxprocs:
++  return("maxprocs");
++    case S_maxprocsperclt:
++  return("maxprocsperclt");
++    case S_readtimeout:
++  return("readtimeout");
++    case S_writetimeout:
++  return("writetimeout");
++    case S_accepttimeout:
++  return("accepttimeout");
+     }
+ }
