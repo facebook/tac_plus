@@ -148,6 +148,53 @@ do_author(struct author_data *data)
     }
 
     post_authorization(username, data);
+
+    if (cfg_get_logauthor()) {
+      switch (svc) {
+        case N_svc_cmd:
+          report(LOG_INFO, "authorization user=%s cmd='%s %s' client=%s device=%s result=%s",
+           data->id->username && data->id->username[0] ?
+           data->id->username : "unknown",
+           cmd && cmd[0] ?
+           cmd : "unknown",
+           assemble_args(data),
+           data->id->NAC_address && data->id->NAC_address[0] ?
+           data->id->NAC_address : "unknown",
+           data->id->NAS_ip && data->id->NAS_ip[0] ?
+           data->id->NAS_ip : "unknown",
+           (data->status == AUTHOR_STATUS_PASS_ADD ||
+            data->status == AUTHOR_STATUS_PASS_REPL) ?
+            "accepted" : "rejected");
+          break;
+        case N_svc_exec:
+          report(LOG_INFO, "authorization user=%s cmd=exec client=%s device=%s result=%s",
+           data->id->username && data->id->username[0] ?
+           data->id->username : "unknown",
+           data->id->NAC_address && data->id->NAC_address[0] ?
+           data->id->NAC_address : "unknown",
+           data->id->NAS_ip && data->id->NAS_ip[0] ?
+           data->id->NAS_ip : "unknown",
+           (data->status == AUTHOR_STATUS_PASS_ADD ||
+            data->status == AUTHOR_STATUS_PASS_REPL) ?
+            "accepted" : "rejected");
+          break;
+        default:
+          report(LOG_INFO, "authorization user=%s svc=%s client=%s device=%s result=%s",
+           data->id->username && data->id->username[0] ?
+           data->id->username : "unknown",
+           svcname && svcname[0] ?
+           svcname : "null",
+           data->id->NAC_address && data->id->NAC_address[0] ?
+           data->id->NAC_address : "unknown",
+           data->id->NAS_ip && data->id->NAS_ip[0] ?
+           data->id->NAS_ip : "unknown",
+           (data->status == AUTHOR_STATUS_PASS_ADD ||
+            data->status == AUTHOR_STATUS_PASS_REPL) ?
+            "accepted" : "rejected");
+          break;
+        }
+    }
+
     return(status);
 }
 

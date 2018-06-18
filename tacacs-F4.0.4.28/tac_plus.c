@@ -430,12 +430,8 @@ main(int argc, char **argv)
 	if (getpeername(session.sock, (struct sockaddr *)&name, &name_len)) {
 	    report(LOG_ERR, "getpeername failure %s", strerror(errno));
 	} else {
-	    if (lookup_peer)
-		on = 0;
-	    else
-		on = NI_NUMERICHOST;
 	    if (getnameinfo((struct sockaddr *)&name, name_len, host,
-			    NI_MAXHOST, NULL, 0, on)) {
+			    NI_MAXHOST, NULL, 0, NI_NUMERICHOST)) {
 		strncpy(host, "unknown", NI_MAXHOST - 1);
 		host[NI_MAXHOST - 1] = '\0';
 	    }
@@ -446,8 +442,7 @@ main(int argc, char **argv)
 
 	    if (session.peerip)
 		free(session.peerip);
-	    session.peerip = tac_strdup((char *)inet_ntop(name.sin_family,
-					&name.sin_addr, host, NI_MAXHOST));
+	    session.peerip = tac_strdup((char *)host);
 	    if (debug & DEBUG_AUTHEN_FLAG)
 		report(LOG_INFO, "session.peerip is %s", session.peerip);
 	}
@@ -647,8 +642,8 @@ main(int argc, char **argv)
 	int pid;
 #endif
 	char host[NI_MAXHOST];
-	struct sockaddr_in from;
-	socklen_t from_len;
+	struct sockaddr_storage from;
+	socklen_t from_len = sizeof(from);
 	int newsockfd = -1;
 	int flags, status;
   int procs_for_client;
@@ -675,13 +670,16 @@ main(int argc, char **argv)
 		continue;
 
 	memset((char *)&from, 0, sizeof(from));
-	from_len = sizeof(from);
 	for (c = 0; c < ns; c++) {
 	    if (pfds[c].revents & POLLIN)
-		newsockfd = accept(s[c], (struct sockaddr *)&from, &from_len);
+		    newsockfd = accept(s[c], (struct sockaddr *)&from, &from_len);
+        /* New connection, break out of for loop to fork, avoids
+           accepting 2 connections then forking, leaving one stranded */
+        if (newsockfd >= 0)
+          break;
 	    else if (pfds[c].revents & (POLLERR | POLLHUP | POLLNVAL)) {
-		report(LOG_ERR, "exception on listen FD %d", s[c]);
-		tac_exit(1);
+		      report(LOG_ERR, "exception on listen FD %d", s[c]);
+		      tac_exit(1);
 	    }
 	}
 
@@ -693,12 +691,8 @@ main(int argc, char **argv)
 	    continue;
 	}
 
-	if (lookup_peer)
-	    flags = 0;
-	else
-	    flags = NI_NUMERICHOST;
 	if (getnameinfo((struct sockaddr *)&from, from_len, host, NI_MAXHOST,
-			NULL, 0, flags)) {
+			NULL, 0, NI_NUMERICHOST)) {
 	    strncpy(host, "unknown", NI_MAXHOST - 1);
 	    host[NI_MAXHOST - 1] = '\0';
 	}
@@ -710,8 +704,8 @@ main(int argc, char **argv)
 
 	if (session.peerip)
 	    free(session.peerip);
-	session.peerip = tac_strdup((char *)inet_ntop(from.sin_family,
-				    &from.sin_addr, host, NI_MAXHOST));
+	session.peerip = tac_strdup((char *)host);
+
 	if (debug & DEBUG_PACKET_FLAG)
 	    report(LOG_DEBUG, "session request from %s sock=%d",
 		   session.peer, newsockfd);

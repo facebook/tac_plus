@@ -28,12 +28,6 @@ Build from source (./configure ; make ; make install)
 or build an RPM
 - rpmbuild -ba tacacs.spec
 
-Build from upstream source
-- Grab 4.0.4.28 from Shrubbery (ftp://ftp.shrubbery.net/pub/tac_plus)
-- Apply patches in patches/F4.0.4.28
-- Run 'autoreconf' in source directory (this requires autoconf tools)
-- Proceed with either building from source or building the RPM
-
 ### RPM Build
 - git clone git@github.com:facebook/tac_plus.git
 - cd tac_plus

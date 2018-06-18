@@ -126,6 +126,7 @@ parser_init(void)
     declare("readtimeout", S_readtimeout);
     declare("writetimeout", S_writetimeout);
     declare("accepttimeout", S_accepttimeout);
+    declare("logauthor", S_logauthor);
 
 }
 
@@ -282,5 +283,7 @@ codestring(int type)
   return("writetimeout");
     case S_accepttimeout:
   return("accepttimeout");
+    case S_logauthor:
+  return("logauthor");
     }
 }

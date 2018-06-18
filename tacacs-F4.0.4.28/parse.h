@@ -96,3 +96,4 @@
 #define S_readtimeout 54
 #define S_writetimeout 55
 #define S_accepttimeout 56
+#define S_logauthor 57

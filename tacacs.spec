@@ -2,7 +2,7 @@ Summary: TACACS+ Daemon
 Name: tacacs
 Group: Networking/Servers
 Version: F4.0.4.28
-Release: 2fb
+Release: 6fb
 License: Cisco
 
 Packager: Facebook Networking <neteng@fb.com> 

@@ -57,6 +57,8 @@
    <syslog_fac>		:=	(auth|cron|daemon|ftp|kern|lpr|mail|news|
 				 syslog|user|uucp|local[0-7])
 
+  <logauthor>
+
    <host_decl>		:=	host = <string> {
 					key = <string>
 					prompt = <string>
@@ -139,6 +141,7 @@ static long int maxprocsperclt = TAC_MAX_PROCS_PER_CLIENT; /* max per client */
 static long int readtimeout = TAC_PLUS_READ_TIMEOUT; /* read timeout */
 static long int writetimeout = TAC_PLUS_WRITE_TIMEOUT; /* write timeout */
 static long int accepttimeout = TAC_PLUS_ACCEPT_TIMEOUT; /* accept timeout */
+static int logauthor = 0; /* log authorization requests */
 
 /*
  * A host definition structure.
@@ -888,6 +891,11 @@ parse_decls()
         }
         sym_get();
         continue;
+
+  case S_logauthor:
+      parse(S_logauthor);
+      logauthor = 1;
+      continue;
 
 	case S_host:
 	    parse_host();
@@ -2557,6 +2565,12 @@ int
 cfg_get_accepttimeout(void)
 {
     return(accepttimeout);
+}
+
+int
+cfg_get_logauthor(void)
+{
+  return(logauthor);
 }
 
 char *
