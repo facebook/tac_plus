@@ -4,8 +4,6 @@ C Daemon that authenticates requests via the Tacacs+ Protocol and logs accountin
 
 This is a fork of Cisco + Shruberry's Tacacas+ daemons (http://www.shrubbery.net/tac_plus/)
 
-RPMS Build on CentOS 7 x86_64 + SRC rpms avaliable here: http://cooperlees.com/rpms/
-
 ## Requirements
 - Linux (have not tested in other OSs)
 - tcpwrappers(-devel)
@@ -44,4 +42,4 @@ or build an RPM
 - rpmbuild -ba tacacs+.spec
 - rpmbuild -ba tacacs+6.spec
 
-- Have a beer
+- Have a beer 🍺
