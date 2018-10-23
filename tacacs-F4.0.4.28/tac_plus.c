@@ -1,6 +1,7 @@
 /*
  * $Id: tac_plus.c,v 1.59 2009-07-16 23:31:26 heas Exp $
  *
+ * Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
  * TACACS_PLUS daemon suitable for using on Unix systems.
  *
  * October 1994, Lol Grant

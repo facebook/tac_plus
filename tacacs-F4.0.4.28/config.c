@@ -1,6 +1,7 @@
 /*
  * $Id: config.c,v 1.48 2009-04-10 16:19:04 heas Exp $
  *
+ * Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
  * Copyright (c) 1995-1998 by Cisco systems, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for

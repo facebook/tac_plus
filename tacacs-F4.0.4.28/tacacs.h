@@ -1,6 +1,7 @@
 /*
  * $Id: tacacs.h,v 1.1 2009-07-17 16:10:52 heas Exp $
  *
+ * Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
  * Copyright (c) 1995-1998 by Cisco systems, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for

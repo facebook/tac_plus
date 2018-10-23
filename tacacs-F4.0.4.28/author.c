@@ -1,6 +1,7 @@
 /*
  * $Id: author.c,v 1.10 2009-03-17 18:31:27 heas Exp $
  *
+ * Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
  * Copyright (c) 1995-1998 by Cisco systems, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for
@@ -59,14 +60,14 @@ author(u_char *pak)
 	send_error_reply(TAC_PLUS_AUTHOR, NULL);
 	return;
     }
-  
+
     /* arg counts start here */
     p = pak + TAC_PLUS_HDR_SIZE + TAC_AUTHOR_REQ_FIXED_FIELDS_SIZE;
 
     /* Length checks */
     len = TAC_AUTHOR_REQ_FIXED_FIELDS_SIZE;
     len += apak->user_len + apak->port_len + apak->rem_addr_len + apak->arg_cnt;
-  
+
     /* Is there enough space for apak->arg_cnt arguments? */
     if (ntohl(hdr->datalength) <
 	(TAC_AUTHOR_REQ_FIXED_FIELDS_SIZE + apak->arg_cnt)) {

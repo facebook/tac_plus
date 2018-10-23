@@ -1,6 +1,7 @@
 /*
  * $Id: acct.c,v 1.11 2009-04-21 15:59:25 heas Exp $
  *
+ * Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
  * Copyright (c) 1995-1998 by Cisco systems, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for
