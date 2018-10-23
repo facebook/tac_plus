@@ -1,3 +1,4 @@
+// Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 #include "tac_plus.h"
 #include <stdlib.h>
 #include <unistd.h>

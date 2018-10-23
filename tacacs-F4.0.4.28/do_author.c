@@ -1,6 +1,7 @@
 /*
  * $Id: do_author.c,v 1.14 2009-03-17 18:38:12 heas Exp $
  *
+ * Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
  * Copyright (c) 1995-1998 by Cisco systems, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for

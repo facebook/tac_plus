@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
  * Copyright (c) 1990 David G. Koontz.
  * All rights reserved.
  *
@@ -65,4 +66,3 @@ union block_48 {
 void tac_des(union LR_block *);
 void tac_des_loadkey(unsigned char *, int);
 void tac_set_des_mode(int);
-

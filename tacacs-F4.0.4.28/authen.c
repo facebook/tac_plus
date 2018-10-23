@@ -1,6 +1,7 @@
 /*
  * $Id: authen.c,v 1.13 2009-04-10 18:46:43 heas Exp $
  *
+ * Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
  * Copyright (c) 1995-1998 by Cisco systems, Inc.
 
  * Permission to use, copy, modify, and distribute this software for

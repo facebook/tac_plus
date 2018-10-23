@@ -1,6 +1,7 @@
 /*
  * $Id: parse.h,v 1.13 2009-03-18 23:24:54 heas Exp $
  *
+ * Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
  * Copyright (c) 1995-1998 by Cisco systems, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for

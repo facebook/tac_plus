@@ -1,6 +1,7 @@
 /*
  * $Id: expire.c,v 1.8 2006-12-13 01:11:37 heas Exp $
  *
+ * Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
  * Copyright (c) 1995-1998 by Cisco systems, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for
