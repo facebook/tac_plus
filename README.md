@@ -35,3 +35,6 @@ or build an RPM
 - sudo yum install rpm-build redhat-rpm-config gcc bison flex m4 pam-devel tcp_wrappers tcp_wrappers-devel
 - rpmbuild -ba tacacs.spec
 - Have a beer 🍺
+
+## License
+tac_plus is BSD licensed, as found in the LICENSE file.
