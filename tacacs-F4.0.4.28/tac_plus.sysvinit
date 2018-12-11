@@ -27,23 +27,29 @@ case "$1" in
         # Got Config File?
         [ -f /etc/tac_plus.conf ] || exit 69
 
-        echo -n $"Starting $prog: "
+        echo -n "Starting $prog: "
         daemon $TACPLUS_BIN -C $TACPLUS_CONF $TACPLUS_OPTS
         RETVAL=$?
         [ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
         echo
         ;;
   stop)
-        echo -n $"Shutting down $prog: "
+        echo -n "Shutting down $prog: "
         killproc $prog
         RETVAL=$?
         [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/$prog
         echo
         ;;
-  restart|reload)
+  restart)
         $0 stop
         $0 start
         RETVAL=$?
+        ;;
+  reload)
+        echo -n "Reloading $prog: "
+        killproc $prog -HUP
+        RETVAL=$?
+        echo
         ;;
   status)
         status $prog
