@@ -16,6 +16,8 @@ ExecStart=/usr/sbin/tac_plus \
   -C /etc/tac_plus.conf \
   -G
 
+ExecReload=/bin/kill -HUP $MAINPID
+
 Restart=always
 
 [Install]
