@@ -1,5 +1,6 @@
 #! /bin/sh
 # Configuration validation subroutine script.
+#   Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 #   Copyright 1992-2013 Free Software Foundation, Inc.
 
 timestamp='2013-04-24'

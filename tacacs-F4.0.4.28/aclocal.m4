@@ -1,5 +1,6 @@
 # generated automatically by aclocal 1.13.4 -*- Autoconf -*-
 
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 # Copyright (C) 1996-2013 Free Software Foundation, Inc.
 
 # This file is free software; the Free Software Foundation

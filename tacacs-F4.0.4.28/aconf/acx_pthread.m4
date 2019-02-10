@@ -1,3 +1,4 @@
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 # ===========================================================================
 #           http://www.nongnu.org/autoconf-archive/acx_pthread.html
 # ===========================================================================

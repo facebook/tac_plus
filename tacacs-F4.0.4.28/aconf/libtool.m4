@@ -1,5 +1,6 @@
 # libtool.m4 - Configure libtool for the host system. -*-Autoconf-*-
 #
+#   Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 #   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005,
 #                 2006, 2007, 2008, 2009, 2010, 2011 Free Software
 #                 Foundation, Inc.
@@ -1196,7 +1197,7 @@ fi
 # Invoke $ECHO with all args, space-separated.
 func_echo_all ()
 {
-    $ECHO "$*" 
+    $ECHO "$*"
 }
 
 case "$ECHO" in

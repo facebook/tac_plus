@@ -1,3 +1,4 @@
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 Format: 3.0 (quilt)
 Source: fb-tac-plus
 Binary: fb-tac-plus

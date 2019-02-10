@@ -1,4 +1,5 @@
 #!/bin/sh
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 ### BEGIN INIT INFO
 # Provides:          tac_plus
 # Required-Start:    $network $local_fs $syslog $remote_fs
@@ -12,8 +13,8 @@
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 DAEMON=/usr/bin/tac_plus
-NAME="fb-tac-plus"              
-DESC="TACACS+ authentication daemon"              
+NAME="fb-tac-plus"
+DESC="TACACS+ authentication daemon"
 LOGDIR=/var/log/
 STARTTIME=1
 PIDFILEBASE=/var/run/tac_plus.pid
@@ -160,12 +161,12 @@ reload_server() {
 
 check_config() {
 	$DAEMON -P $DAEMON_ARGS
-	return $?	
+	return $?
 }
 
 check_config_quiet() {
 	$DAEMON -P $DAEMON_ARGS >/dev/null 2>&1
-	return $?	
+	return $?
 }
 
 kill_pid() {
@@ -204,7 +205,7 @@ force_stop() {
   else
     kill_pid $PIDFN
     if [ "$?" != "0" ]; then
-      FAILED=1 
+      FAILED=1
     fi
   fi
   if [ "$FAILED" != "0" ]; then
@@ -232,7 +233,7 @@ case "$1" in
             # NOTE: Some servers might die some time after they start,
             # this code will detect this issue if STARTTIME is set
             # to a reasonable value
-            [ -n "$STARTTIME" ] && sleep $STARTTIME # Wait some time 
+            [ -n "$STARTTIME" ] && sleep $STARTTIME # Wait some time
             if  running ;  then
                 # It's ok, the server started and is running
                 log_end_msg 0
@@ -299,7 +300,7 @@ case "$1" in
 	if reload_server ; then
 		if running ; then
 			log_end_msg 0
-		else 
+		else
 			log_progress_msg "$NAME not running"
 			log_end_msg 1
 		fi

@@ -1,5 +1,6 @@
 # ltversion.m4 -- version numbers			-*- Autoconf -*-
 #
+#   Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 #   Copyright (C) 2004 Free Software Foundation, Inc.
 #   Written by Scott James Remnant, 2004
 #

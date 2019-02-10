@@ -2,6 +2,7 @@
 # libtool (GNU libtool) 2.4.2
 # Written by Gordon Matzigkeit <gord@gnu.ai.mit.edu>, 1996
 
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 # Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005, 2006,
 # 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
 # This is free software; see the source for copying conditions.  There is NO
@@ -1432,7 +1433,7 @@ func_infer_tag ()
 	      eval "tag_compilers=\$tag_compilers_${z}"
 	      if test -n "$tag_compilers"; then
 		for zp in $tag_compilers; do
-		  case $base_compiler in   
+		  case $base_compiler in
 		    $zp) tagname=$z; break;;
 		  esac
 		done
@@ -9703,4 +9704,3 @@ build_old_libs=`case $build_libtool_libs in yes) echo no;; *) echo yes;; esac`
 # sh-indentation:2
 # End:
 # vi:sw=2
-
