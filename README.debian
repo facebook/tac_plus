@@ -20,3 +20,6 @@ initscripts are /etc/init.d/fb-tac-plus.
 
 Enjoy, and thanks to the facebook guys for the changes that they made
 here :-)
+
+## License
+tac_plus is BSD licensed, as found in the LICENSE file.

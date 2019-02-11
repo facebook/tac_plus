@@ -1,3 +1,5 @@
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+
 Summary: TACACS+ Daemon
 Name: tacacs
 Group: Networking/Servers
@@ -5,7 +7,7 @@ Version: F4.0.4.28
 Release: 6fb
 License: Cisco
 
-Packager: Facebook Networking <neteng@fb.com> 
+Packager: Facebook Networking <neteng@fb.com>
 Vendor: Facebook Inc.
 
 Source: %{name}-%{version}.tar.gz

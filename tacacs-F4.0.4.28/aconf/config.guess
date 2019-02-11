@@ -1,5 +1,6 @@
 #! /bin/sh
 # Attempt to guess a canonical system name.
+#   Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 #   Copyright 1992-2013 Free Software Foundation, Inc.
 
 timestamp='2013-05-16'

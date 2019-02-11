@@ -1,5 +1,6 @@
 # ltsugar.m4 -- libtool m4 base layer.                         -*-Autoconf-*-
 #
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 # Copyright (C) 2004, 2005, 2007, 2008 Free Software Foundation, Inc.
 # Written by Gary V. Vaughan, 2004
 #
