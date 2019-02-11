@@ -1,4 +1,5 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
+/* Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved */
 
 
 #ifndef CONFIG_H

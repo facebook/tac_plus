@@ -1,3 +1,5 @@
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+
 dnl Process this file with autoconf to produce a configure script.
 dnl A configure script is provided, in cause you do not have autoconf.
 
