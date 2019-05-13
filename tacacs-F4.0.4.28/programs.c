@@ -399,6 +399,65 @@ read_args(int n, int fd)
 
 /*
  * Do variable interpolation on a string, then invoke it as a shell command.
+ * Write a faked set of AV pairs to standard input of the command and
+ * disregard its standard output.  Return the commands final status
+ * when it terminates
+ */
+int
+call_pre_enable(char *string, struct authen_data *authen_data, char *error, int err_len)
+{
+    /*char **new_args;*/
+    int readfd, writefd, errorfd;
+    int status;/*, i;*/
+    char *cmd = NULL;
+    char fakeoutput[] = "service=shell\ncmd=enable\ncmd-arg=<cr>\n";
+    struct author_data data;
+#if HAVE_PID_T
+    pid_t pid;
+#else
+    int pid;
+#endif
+    data.id = authen_data->NAS_id;
+    data.authen_method = AUTHEN_METH_ENABLE;
+    data.authen_type = authen_data->type;
+    data.service = authen_data->service;
+    data.status = authen_data->status;
+
+    cmd = substitute(string, &data);
+    pid = my_popen(cmd, &readfd, &writefd, &errorfd);
+    memset(error, '\0', err_len);
+    free(cmd);
+
+    if (pid < 0) {
+    close_fds(readfd, writefd, errorfd);
+    return(1);      /* deny */
+    }
+
+    /* write a fake enable input */
+    write(writefd, fakeoutput, sizeof(fakeoutput) - 1);
+    close(writefd);
+    writefd = -1;
+
+    /*new_args = read_args(0, readfd);*/
+
+    read_string(errorfd, error, err_len);
+    if (error[0] != '\0') {
+    report(LOG_ERR, "Error from program (%d): \"%s\" ",
+           strlen(error), error);
+    }
+
+    /* count the args */
+    /*for (i = 0; new_args[i]; i++)*/
+     /* NULL stmt */ ;
+
+    status = waitfor(pid);
+    close_fds(readfd, writefd, errorfd);
+    return(status);
+}
+
+
+/*
+ * Do variable interpolation on a string, then invoke it as a shell command.
  * Write an appropriate set of AV pairs to standard input of the command and
  * read its standard output into outarray.  Return the commands final status
  * when it terminates
