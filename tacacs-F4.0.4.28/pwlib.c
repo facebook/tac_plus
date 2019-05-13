@@ -238,6 +238,18 @@ verify_pwd(char *username, char *passwd, struct authen_data *data,
 {
     char *p;
 
+#if HAVE_PAM
+    if (strcmp(cfg_passwd, "PAM") == 0) {
+	/* try to verify the password via PAM */
+	if (!pam_verify(username, passwd, data)) {
+	data->status = TAC_PLUS_AUTHEN_STATUS_FAIL;
+	return(0);
+	} else
+	data->status = TAC_PLUS_AUTHEN_STATUS_PASS;
+	return(data->status == TAC_PLUS_AUTHEN_STATUS_PASS);
+    }
+#endif
+
     /* Deal with the cfg_passwd depending on its type */
     p = tac_find_substring("cleartext ", cfg_passwd);
     if (p) {
