@@ -84,6 +84,7 @@
 #ifdef HAVE_PAM
 				PAM |
 #endif
+				external <filename> |
 				skey
 
    <user_attr>		:=	name	= <string> |
@@ -1197,6 +1198,7 @@ parse_user(void)
 	    case S_file:
 	    case S_cleartext:
 	    case S_des:
+	    case S_external:
 		sprintf(buf, "%s ", sym_buf);
 		sym_get();
 		strcat(buf, sym_buf);
@@ -1214,7 +1216,7 @@ parse_user(void)
 #ifdef HAVE_PAM
 			    "'PAM', "
 #endif
-			    "or 'des' keyword after 'login =' on line %d",
+			    "'external', or 'des' keyword after 'login =' on line %d",
 			    sym_line);
 	    }
 	    sym_get();

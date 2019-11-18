@@ -46,7 +46,7 @@ static int pam_tacacs(int, const struct pam_message **, struct pam_response **,
 #endif
 
 /*
- * Generic password verification routines for des, file and cleartext passwords
+ * Generic password verification routines for des, file, cleartext, and external passwords
  */
 static int etc_passwd_file_verify(char *, char *, struct authen_data *);
 static int des_verify(char *, char *);
@@ -54,6 +54,8 @@ static int des_verify(char *, char *);
 static int pam_verify(char *, char *, struct authen_data *data);
 #endif
 static int passwd_file_verify(char *, char *, struct authen_data *, char *);
+
+static int external_verify_password(char *, char *, struct authen_data *, char *);
 
 extern char *progname;
 
@@ -139,6 +141,27 @@ verify(char *name, char *passwd, struct authen_data *data, int recurse)
     }
 
     /*
+     * If there is no login or pap password for this user, see if there is
+     * a "default" user that can be used.
+     */
+    if ( !cfg_user_exists(name) )
+    {
+        /* If there is no global password for the user, try seeing if there is
+          a password for the default userid */
+
+        if ( !cfg_passwd) {
+            cfg_passwd = cfg_get_login_secret(DEFAULT_USERNAME, recurse);
+        }
+
+        /* If there is no password for the default userid, try seeing if there
+           is a global password for the default userid */
+
+        if ( !cfg_passwd) {
+            cfg_passwd = cfg_get_global_secret(DEFAULT_USERNAME, recurse);
+        }
+    }
+
+    /*
      * If we still have no password for this user (or no user for that
      * matter) but the default authentication = file <file> statement
      * has been issued, attempt to use this password file
@@ -205,6 +228,21 @@ verify(char *name, char *passwd, struct authen_data *data, int recurse)
 	exp_date = cfg_get_expires(name, recurse);
 	set_expiration_status(exp_date, data);
 	return(data->status == TAC_PLUS_AUTHEN_STATUS_PASS);
+    }
+
+    p = tac_find_substring("external ", cfg_passwd);
+    if (p) {
+      /* try to verify this external password */
+      if (!external_verify_password(name,passwd,data,p)) {
+          data->status = TAC_PLUS_AUTHEN_STATUS_FAIL;
+          return (0);
+      } else {
+          data->status = TAC_PLUS_AUTHEN_STATUS_PASS;
+      }
+
+      exp_date = cfg_get_expires(name, recurse);
+      set_expiration_status(exp_date, data);
+      return (data->status == TAC_PLUS_AUTHEN_STATUS_PASS);
     }
 
     p = tac_find_substring("file ", cfg_passwd);
@@ -683,3 +721,83 @@ pam_verify(char *user, char *passwd, struct authen_data *data)
     return(0);
 }
 #endif
+
+/*
+ * verify a provided password using an external routine
+ * external routine returns 0 if correct, 1 if incorrect
+ *    routine interface similar to that of before/after authorization
+ * subroutine returns 1 if verified, 0 otherwise.
+ */
+
+int
+external_verify_password(char *user, char *passwd, struct authen_data *data, char *cmd)
+{
+    int status;
+    char *value;
+    char **out_args;
+    char **in_args;
+    int out_cnt, i, j;
+
+    data->status = TAC_PLUS_AUTHEN_STATUS_FAIL;
+
+    if (debug & DEBUG_PASSWD_FLAG)
+      report(LOG_DEBUG, "verify %s for %s using %s",
+              passwd, user, cmd);
+
+    if (passwd == NULL ||
+      *passwd == '\0' ||
+      user == NULL ||
+      *user == '\0' ||
+      cmd == NULL ||
+      *cmd == '\0') {
+      if (debug & DEBUG_PASSWD_FLAG)
+          report(LOG_DEBUG, "verify returns 0 - something was NULL");
+      return (0);
+    }
+
+    /* Allocate memory for 'user=USERID' and 'passwd=PASSWD' */
+    in_args = (char **) malloc(2);
+    in_args[0] = (char *) malloc( strlen(user)+strlen("user=")+1 );
+    in_args[1] = (char *) malloc( strlen(passwd)+strlen("passwd=")+1 );
+    sprintf(in_args[0], "user=%s", user);
+    sprintf(in_args[1], "passwd=%s", passwd);
+
+    status = call_external_auth_process(cmd, in_args, 2, &out_args, &out_cnt);
+
+    free(in_args[0]);
+    free(in_args[1]);
+
+    /* throw away out_args, but keep message */
+    for(i=0; i < out_cnt; i++) {
+      value = tac_find_substring("msg=", out_args[i]);
+      if ( value )
+      {
+          if ( data->server_msg ) { free(data->server_msg); }
+          data->server_msg=tac_strdup(value);
+      }
+      free(out_args[i]);
+    }
+    free(out_args);
+
+    switch (status) {
+    default:
+      if (debug & DEBUG_PASSWD_FLAG)
+          report(LOG_DEBUG, "cmd %s returns %d (unrecognised value)",
+                 cmd, status);
+      return(0);
+
+    case 0: /* Permit - Password Correct*/
+      if (debug & DEBUG_PASSWD_FLAG)
+          report(LOG_DEBUG, "cmd %s returns 0 (passwd correct)", cmd);
+      data->status = TAC_PLUS_AUTHEN_STATUS_PASS;
+      return(1);
+
+    case 1: /* Deny - Password Incorrect*/
+      if (debug & DEBUG_PASSWD_FLAG)
+          report(LOG_DEBUG, "cmd %s returns 1 (passwd incorrect)", cmd);
+      return(0);
+    }
+
+    return (0);
+}
+

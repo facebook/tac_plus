@@ -89,6 +89,7 @@ parser_init(void)
 #endif
     declare("exec", S_exec);
     declare("expires", S_expires);
+    declare("external", S_external);
     declare("file", S_file);
     declare("group", S_group);
     declare("global", S_global);
@@ -226,6 +227,8 @@ codestring(int type)
 	return("nopassword");
     case S_des:
 	return("des");
+    case S_external:
+	return("external");
     case S_svc:
 	return("service");
     case S_default:

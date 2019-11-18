@@ -1,4 +1,4 @@
-// Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+/* Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved */
 #ifndef PATHSL_H
 #define PATHSL_H
 

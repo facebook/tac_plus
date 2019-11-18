@@ -542,3 +542,61 @@ call_post_process(char *string, struct author_data *data, char ***outargsp,
 
     return(status);
 }
+
+
+/* Execute an external command, pass AV pairs to it, and read av pairs
+from it. Return exit status when command terminates. */
+
+int call_external_auth_process(char *cmd, char **inargsp, int inargs_cnt, char ***outargsp,
+      int *outargs_cntp)
+{
+    char **new_args;
+    int readfd, writefd, errorfd;
+    int status, i;
+    int pid = my_popen(cmd, &readfd, &writefd, &errorfd);
+    char error[1500];
+
+    if (pid < 0) {
+	close_fds(readfd, writefd, errorfd);
+	return(1);		/* deny */
+    }
+
+    for (i = 0; i < inargs_cnt; i++) {
+      if (debug & DEBUG_AUTHEN_FLAG)
+          report(LOG_DEBUG, "input %s", inargsp[i]);
+    }
+
+    if (write_args(writefd, inargsp, inargs_cnt)) {
+	close_fds(readfd, writefd, errorfd);
+	return (1);             /* failed writing to it */
+    }
+
+    close(writefd);
+    writefd = -1;
+
+    new_args = read_args(0, readfd);
+    *outargsp = new_args;
+
+    if (debug & DEBUG_AUTHEN_FLAG) {
+      for (i = 0; new_args[i]; i++) {
+          report(LOG_DEBUG, "output %s", new_args[i]);
+      }
+    }
+
+    error[0] = '\0';
+    read_string(errorfd, error, 1500);
+    if (error[0] != '\0') {
+        report(LOG_ERR, "Error from program (%d): \"%s\" ",
+               strlen(error), error);
+    }
+
+    /* count the args */
+    for (i = 0; new_args[i]; i++)
+       /* NULL stmt */ ;
+
+    *outargs_cntp = i;
+
+    status = waitfor(pid);
+    return (status);
+}
+

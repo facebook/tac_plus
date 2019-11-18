@@ -209,7 +209,8 @@ pre_authorization(char *username, struct author_data *data)
 {
     int status;
     char **out_args;
-    int out_cnt, i;
+    char *value;
+    int out_cnt, i, j;
     char *cmd;
     char error_str[255];
     int error_len = 255;
@@ -231,6 +232,24 @@ pre_authorization(char *username, struct author_data *data)
 
     status = call_pre_process(cmd, data, &out_args, &out_cnt, error_str,
 			      error_len);
+
+    /* Copy and remove msg= from returned output pairs */
+    for(i=0; i < out_cnt; i++) {
+        value = tac_find_substring("msg=", out_args[i]);
+        if ( value )
+        {
+            if ( data->msg ) { free(data->msg); }
+            data->msg=tac_strdup(value);
+            report(LOG_DEBUG, "Message returned from cmd: %s", value);
+            free(out_args[i]);   /* just added */
+            for ( j=i; j<out_cnt-1; j++ ) {
+                out_args[j]=out_args[j+1];
+                out_args[j+1]=NULL;
+            }
+            out_cnt--;
+        }
+    }
+
 
     switch (status) {
     default:
@@ -328,7 +347,8 @@ static void
 post_authorization(char *username, struct author_data *data)
 {
     char **out_args;
-    int out_cnt, i;
+    char *value;
+    int out_cnt, i, j;
     int status;
     char *after = cfg_get_pvalue(username, TAC_IS_USER,
 				S_after, TAC_PLUS_RECURSE);
@@ -339,6 +359,23 @@ post_authorization(char *username, struct author_data *data)
 	report(LOG_DEBUG, "After authorization call: %s", after);
 
     status = call_post_process(after, data, &out_args, &out_cnt);
+
+    /* Next set and remove msg= from outgoing pairs */
+    for(i=0; i < out_cnt; i++) {
+        value = tac_find_substring("msg=", out_args[i]);
+        if ( value )
+        {
+            if ( data->msg ) { free(data->msg); }
+            data->msg=tac_strdup(value);
+            report(LOG_DEBUG, "Message returned from cmd: %s", value);
+            free(out_args[i]);   /* just added */
+            for ( j=i; j<out_cnt-1; j++ ) {
+                out_args[j]=out_args[j+1];
+                out_args[j+1]=NULL;
+            }
+            out_cnt--;
+        }
+    }
 
     if (status != 2) {
 	/* throw away out_args */

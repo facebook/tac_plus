@@ -401,6 +401,7 @@ int	cfg_acl_check(char *, char *);
 void	cfg_clean_config(void);
 char	*cfg_get_arap_secret(char *, int);
 char	*cfg_get_authen_default(void);
+int     cfg_get_logauthor(void);
 char	*cfg_get_chap_secret(char *, int);
 NODE	*cfg_get_cmd_node(char *, char *, int);
 #ifdef UENABLE
@@ -432,6 +433,8 @@ int	cfg_ppp_is_configured(char *, int);
 int	cfg_read_config(char *);
 int	cfg_user_exists(char *);
 int	cfg_user_svc_default_is_permit(char *);
+int cfg_get_maxprocs(void);
+int cfg_get_maxprocsperclt(void);
 
 /* default_fn.c */
 int	default_fn(struct authen_data *);
@@ -467,6 +470,7 @@ void	parser_init(void);
 int call_pre_process(char *, struct author_data *, char ***, int *, char *,
 		     int);
 int call_post_process(char *, struct author_data *, char ***, int *);
+int call_external_auth_process(char *, char **, int, char ***, int *);
 
 /* pw.c */
 struct passwd *tac_passwd_lookup(char *, char *);

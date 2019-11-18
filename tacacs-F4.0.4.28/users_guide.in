@@ -354,7 +354,7 @@ because outbound PAP is implemented by sending the password from the
 daemon to the NAS. This is a security issue if the TACACS+ key is ever
 compromised.
 
-There are 4 ways to authenticate a user for login.
+There are 5 ways to authenticate a user for login.
 
 1). You can include a DES (or cleartext) password for a user or for a
 group that s/he is a member of, viz:
@@ -434,6 +434,31 @@ validate from the /etc/master.passwd or /etc/shadow file. The symptom will
 be that for each authentiction that is attempted, the password will appear
 to be wrong whether it was typed correctly or not.
 
+5). Authentication using external routines.
+
+You can have authentication performed by an external routine - such as to
+do a lookup in a database, etc. The userid and password are passed to the
+routine using argument/value pairs similar to the before and after
+authorization routines. For example, if the userid were "joe" and the
+password given were "abc123", the process would receive:
+
+user=joe
+passwd=abc123
+
+To enable external authentication, use as follows:
+
+    user = fred {
+      login = external /path/to/external/authenticator
+    }
+
+The external routine should return and exit success code of 0 if the
+userid and password are correct, 1 otherwise. The routine can also,
+optionally, return a "msg=some string" to change the message that is
+displayed to the user. This message will be displayed regardless of
+whether the authentication is successful or not.
+
+This method of authentication is particularly useful with the DEFAULT
+user.
 
 RECURSIVE PASSWORD LOOKUPS
 ---------------------------
@@ -1051,6 +1076,12 @@ NOTE: AV pairs are text strings with the format
 attribute=value. Unlike the configuration file which allows spaces
 when specifying AV pairs, there should be no spaces surrounding the
 "=" sign when using the programmatic interface.
+
+NOTE: Regardless of the return code, both the before and after
+authorization routines will detect a "msg=" AV pair, and if present
+will display the given message on the NAS. This can be used to indicate
+to the user why the authorization failed, or just to give positive
+feedback, or to warn to be careful for privileged commands.
 
 CALLING SCRIPTS BEFORE AUTHORIZATION
 ------------------------------------
