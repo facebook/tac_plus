@@ -1978,7 +1978,11 @@ cfg_get_value(char *name, int isuser, int attr, int recurse)
     if (!user) {
 	if (debug & DEBUG_CONFIG_FLAG)
 	    report(LOG_DEBUG, "cfg_get_value: no user/group named %s", name);
-	return(value);
+        if (isuser && cfg_user_exists(DEFAULT_USERNAME)) {
+            user = (USER *)hash_lookup(usertable, DEFAULT_USERNAME);
+            report(LOG_DEBUG, "cfg_get_value: using DEFAULT");
+        } else
+            return(value);
     }
 
     /* found the entry. Lookup value from attr=value */
