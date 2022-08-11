@@ -212,8 +212,12 @@ General Public License for more details.
 
 Written by Dan Schmidt - Please visit tacacs.org to check for updates.
 '''
+from __future__ import print_function
 
-import sys,re,getopt,ConfigParser
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+import sys,re,getopt,configparser
 from time import strftime
 
 # I really don't want to deal with these exceptions more than once
@@ -232,23 +236,23 @@ def get_attribute(config, the_section, the_option, log_file, filename):
     #Should not have any exceptions - BUT, just in case
     try:
         attributes = config.get(the_section, the_option)
-    except ConfigParser.NoSectionError:
+    except configparser.NoSectionError:
         log_file.write(strftime("%Y-%m-%d %H:%M:%S: ")
                 + "Error: Section '%s' Doesn't Exist!\n"
                 % (the_section))
         sys.exit(1)
-    except ConfigParser.DuplicateSectionError:
+    except configparser.DuplicateSectionError:
         log_file.write(strftime("%Y-%m-%d %H:%M:%S: ")
                 + "Error: Duplicate section '%s'\n"
                 % (the_section))
         sys.exit(1)
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         log_file.write(strftime("%Y-%m-%d %H:%M:%S: ")
                     + "Error: '%s' not found in section '%s\n'"
                      % (the_option, the_section))
         sys.exit(1)
     #To do: finish exceptions.
-    except ConfigParser.ParsingError:
+    except configparser.ParsingError:
         log_file.write(strftime("%Y-%m-%d %H:%M:%S: ")
                 + "Error: Can't parse file '%s'! (You got me)\n"
              % (filename))
@@ -300,9 +304,9 @@ def main():
     argv = sys.argv
     try:
         optlist, args = getopt.getopt(sys.argv[1:], 'i:u:f:l:d:?:D', ['fix_crs_bug','?', '-?', 'help', 'Help'])
-    except getopt.GetoptError, err:
-        print str(err)
-        print __doc__
+    except getopt.GetoptError as err:
+        print(str(err))
+        print(__doc__)
         sys.exit(1)
     for (i, j) in optlist:
         if i == '-i':
@@ -316,15 +320,15 @@ def main():
         elif i == '-d':
             device = j
         elif i in ('?', '-?', 'help', 'Help'):
-            print __doc__
+            print(__doc__)
             sys.exit(1)
         elif i == '-D':
             is_debug = True
         else:
-            print 'Unknown option:', i
+            print('Unknown option:', i)
             sys.exit(1)
     if len(argv) < 7:
-        print __doc__
+        print(__doc__)
         sys.exit(1)
     log_file = open (log_name, "a")
 #DEBUG!  We at least got CALLED
@@ -386,7 +390,7 @@ def main():
         log_file.write(strftime("%Y-%m-%d %H:%M:%S: ")
                 + "Error: No username entered!\n")
         sys.exit(1)
-    config = ConfigParser.SafeConfigParser()
+    config = configparser.SafeConfigParser()
     if not (filename in config.read(filename)):
         log_file.write(strftime("%Y-%m-%d %H:%M:%S: ")
                 + "Error: Can't open/parse '%s'\n"
@@ -493,7 +497,7 @@ def main():
                     for item in return_pairs:
                         #DEBUG
                         # log_file.write("Returning:%s\n" % item.strip())
-                        print item.strip('\n')
+                        print(item.strip('\n'))
                     if want_tac_pairs:
                         #DEBUG
                         # log_file.write("Exiting status 2\n")
@@ -509,7 +513,7 @@ def main():
             for item in return_pairs:
                 #DEBUG
                 # log_file.write("Returning:%s\n" % item.strip())
-                print item.strip('\n')
+                print(item.strip('\n'))
             log_file.write(strftime("%Y-%m-%d %H:%M:%S: ")
                  + "User '%s' granted access to device '%s' in group '%s' from '%s'\n"
                  % (user_name, device, this_group, ip_addr))
