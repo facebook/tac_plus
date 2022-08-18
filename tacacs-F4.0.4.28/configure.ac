@@ -75,7 +75,7 @@ case "${host_os}" in
 	#      existence of libnsl instead of hard-coding
 	CPPFLAGS="$CFLAGS -I/usr/local/include"; export CPPFLAGS
 	LDFLAGS="$LDFLAGS -L/usr/local/lib -L/lib"; export LDFLAGS
-	LIBS="-lnsl -lcrypt $LIBS"; export LIBS
+	LIBS="-lcrypt $LIBS"; export LIBS
 	AC_DEFINE(LINUX)
 
 	# XXX: does linux need glibc: -DGLIBC
