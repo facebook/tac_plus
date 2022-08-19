@@ -22,7 +22,7 @@ if TACACECLNT
 tac_plus_SOURCES += aceclnt_fn.c
 endif
 tac_plus_LDFLAGS = -L$(top_srcdir)
-tac_plus_LDADD = $(WRAPLIBS) -ltacacs
+tac_plus_LDADD = $(WRAPLIBS) libtacacs.la
 
 lib_LTLIBRARIES = libtacacs.la
 libtacacs_la_SOURCES = fdes.c maxsess.c md4.c md5.c packet.c
