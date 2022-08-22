@@ -59,7 +59,7 @@ get_authen_continue(void)
 		     "when expecting authentication cont", session.peer,
 		     hdr->type, hdr->seq_no) == -1)
 	    strcpy(msg, "");
-	report(LOG_ERR, msg);
+	report(LOG_ERR, "%s", msg);
 	send_authen_error(msg);
 	return(NULL);
     }
