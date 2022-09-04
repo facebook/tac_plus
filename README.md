@@ -37,4 +37,4 @@ or build an RPM
 - Have a beer 🍺
 
 ## License
-tac_plus is BSD licensed, as found in the LICENSE file.
+tac_plus is MIT licensed, as found in the LICENSE file.
