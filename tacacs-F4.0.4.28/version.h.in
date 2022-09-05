@@ -5,6 +5,6 @@
 #define VERSION_H
 
 char package[] = "tacacs+";
-char version[] = "F4.0.4.28-6fb";
+char version[] = "F4.0.4.28-7fb";
 
 #endif
