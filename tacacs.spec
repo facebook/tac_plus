@@ -137,11 +137,11 @@ export DONT_STRIP=1
 %{_libdir}/libtacacs.so
 
 
+%{_datadir}/tacacs/do_auth.py
 %if 0%{?el6}
 %{_datadir}/tacacs/do_auth.pyc
 %{_datadir}/tacacs/do_auth.pyo
 %else
-%{_datadir}/tacacs/do_auth.py
 %{_datadir}/tacacs/__pycache__/do_auth.cpython-3*.pyc
 %endif
 
