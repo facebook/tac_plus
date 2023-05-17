@@ -29,7 +29,6 @@ Source: %{name}-%{version}.tar.gz
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
-Requires: pam
 BuildRequires: gcc, bison, flex, m4, pam-devel, libtool, autoconf, automake, python-rpm-macros
 
 %if 0%{?libwrap}
