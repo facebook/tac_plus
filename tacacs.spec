@@ -47,14 +47,12 @@ Tacacs+ Daemon for Linux
 %setup
 
 %build
-export CFLAGS="-DHAVE_PAM"
+export CFLAGS="-DHAVE_PAM -fPIE"
 
 libtoolize --force
 autoreconf --install
 automake --add-missing
 autoreconf
-
-export CFLAGS="-fPIE"
 
 %if 0%{?libwrap}
 %configure --enable-acls --enable-uenable
