@@ -76,9 +76,14 @@ export DONT_STRIP=1
 %{__install} -Dp -m0755 tac_plus.sysvinit %{buildroot}%{_initrddir}/tac_plus
 %endif
 
-%if 0%{?el6}
-
-%else
+# no need to do anything on el6
+%if 0%{?el7}
+%py_byte_compile %{__python} %{buildroot}%{_datadir}/tacacs/do_auth.py
+%endif
+%if 0%{?el8}
+%py_byte_compile %{__python3} %{buildroot}%{_datadir}/tacacs/do_auth.py
+%endif
+%if 0%{?el9}
 %py_byte_compile %{__python3} %{buildroot}%{_datadir}/tacacs/do_auth.py
 %endif
 
@@ -141,7 +146,12 @@ export DONT_STRIP=1
 %if 0%{?el6}
 %{_datadir}/tacacs/do_auth.pyc
 %{_datadir}/tacacs/do_auth.pyo
-%else
+%endif
+%if 0%{?el7}
+%{_datadir}/tacacs/do_auth.pyc
+%{_datadir}/tacacs/do_auth.pyo
+%endif
+%if 0%{?el9}
 %{_datadir}/tacacs/__pycache__/do_auth.cpython-3*.pyc
 %endif
 
