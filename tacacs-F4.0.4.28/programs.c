@@ -31,6 +31,7 @@
 #include <signal.h>
 
 static void close_fds(int, int, int);
+static int is_valid_address(const char *address);
 static char *lookup(char *, struct author_data *);
 #if HAVE_PID_T
 static pid_t my_popen(char *, int *, int *, int *);
@@ -81,7 +82,10 @@ lookup(char *sym, struct author_data *data)
 	return(tac_strdup(data->id->NAS_port));
     }
     if (STREQ(sym, "address")) {
-	return(tac_strdup(data->id->NAC_address));
+        if (is_valid_address(data->id->NAC_address)) {
+            return(tac_strdup(data->id->NAC_address));
+        }
+
     }
     if (STREQ(sym, "priv")) {
 	snprintf(buf, sizeof(buf), "%d", data->id->priv_lvl);
@@ -114,6 +118,27 @@ lookup(char *sym, struct author_data *data)
     }
 
     return(tac_strdup("unknown"));
+}
+
+/* is_valid_address performs input santization for the NAC address field
+On IP networks deployed within Meta, this value refers to an IP address,
+a domain name, or special names like Local, or InfiNode. The function verifies if
+the address consists of alphanumberic characters and special characters '_', '.'
+This function might need to be updated to support networks with other transports
+*/
+static int is_valid_address(const char *address) {
+    size_t len = strlen(address);
+
+    // Character set check
+    for (size_t i = 0; i < len; i++) {
+        char c = address[i];
+        if (!isalnum(c) && c != '_' && c != '.') {
+            report(LOG_DEBUG, "invalid character=%c", address[i]);
+            return 0;
+        }
+    }
+
+    return 1; // true
 }
 
 /*
