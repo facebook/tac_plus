@@ -83,7 +83,7 @@ lookup(char *sym, struct author_data *data)
     }
 
     if (STREQ(sym, "ip")) {
-        if (is_valid_name(data->id->NAS_ip)) {
+        if (is_valid_ip(data->id->NAS_ip)) {
             return(tac_strdup(data->id->NAS_ip));
         }
     }
@@ -145,11 +145,12 @@ static int is_valid_name(const char *name) {
         return 0;
     }
 
+
     // Character set check
     for (size_t i = 0; i < len; i++) {
         char c = name[i];
-        if (!isalnum(c) && c != '_' && c != '.') {
-            report(LOG_DEBUG, "invalid character=%c", c);
+        if (!isalnum(c) && c != '_' && c != '.' && c != ':') {
+            report(LOG_DEBUG, "invalid character '%c' inside field [%s]", c, name);
             return 0;
         }
     }
@@ -159,7 +160,7 @@ static int is_valid_name(const char *name) {
 
 /* is_valid_ip performs a very basic input sanitization for ip addresses */
 static int is_valid_ip(const char *address) {
-    size_t len = strlen(address)
+    size_t len = strlen(address);
 
     if (len > 100) {
         report(LOG_DEBUG, "field %s is longer than allowed length 100", address);
@@ -168,8 +169,8 @@ static int is_valid_ip(const char *address) {
     // Character set check
     for (size_t i = 0; i < len; i++) {
         char c = address[i];
-        if (!isalnum(c) && c != '.' && c != ":") {
-            report(LOG_DEBUG, "invalid character=%c", address[i]);
+        if (!isalnum(c) && c != '.' && c != ':') {
+            report(LOG_DEBUG, "invalid character %c found inside field [%s]", c, address);
             return 0;
         }
     }
@@ -230,7 +231,7 @@ substitute(char *string, struct author_data *data)
 	/* copy value into output */
 	while (valuep && *valuep)
 	    *outp++ = *valuep++;
-	free(value);
+	    free(value);
     }
     *outp++ = '\0';
 
