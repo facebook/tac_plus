@@ -31,7 +31,8 @@
 #include <signal.h>
 
 static void close_fds(int, int, int);
-static int is_valid_address(const char *address);
+static int is_valid_ip(const char *address);
+static int is_valid_name(const char *name);
 static char *lookup(char *, struct author_data *);
 #if HAVE_PID_T
 static pid_t my_popen(char *, int *, int *, int *);
@@ -70,69 +71,104 @@ lookup(char *sym, struct author_data *data)
     static char buf[5];
 
     if (STREQ(sym, "user")) {
-	return(tac_strdup(data->id->username));
+        if (is_valid_name(data->id->username)) {
+            return(tac_strdup(data->id->username));
+        }
     }
+
     if (STREQ(sym, "name")) {
-	return(tac_strdup(data->id->NAS_name));
+        if (is_valid_name(data->id->NAS_name)) {
+            return(tac_strdup(data->id->NAS_name));
+        }
     }
+
     if (STREQ(sym, "ip")) {
-	return(tac_strdup(data->id->NAS_ip));
+        if (is_valid_name(data->id->NAS_ip)) {
+            return(tac_strdup(data->id->NAS_ip));
+        }
     }
+
     if (STREQ(sym, "port")) {
-	return(tac_strdup(data->id->NAS_port));
+	    return(tac_strdup(data->id->NAS_port));
     }
+
     if (STREQ(sym, "address")) {
-        if (is_valid_address(data->id->NAC_address)) {
+        if (is_valid_name(data->id->NAC_address)) {
             return(tac_strdup(data->id->NAC_address));
         }
-
     }
     if (STREQ(sym, "priv")) {
-	snprintf(buf, sizeof(buf), "%d", data->id->priv_lvl);
-	return(tac_strdup(buf));
+        snprintf(buf, sizeof(buf), "%d", data->id->priv_lvl);
+        return(tac_strdup(buf));
     }
     if (STREQ(sym, "method")) {
-	snprintf(buf, sizeof(buf), "%d", data->authen_method);
-	return(tac_strdup(buf));
+        snprintf(buf, sizeof(buf), "%d", data->authen_method);
+        return(tac_strdup(buf));
     }
     if (STREQ(sym, "type")) {
-	snprintf(buf, sizeof(buf), "%d", data->authen_type);
-	return(tac_strdup(buf));
+        snprintf(buf, sizeof(buf), "%d", data->authen_type);
+        return(tac_strdup(buf));
     }
     if (STREQ(sym, "service")) {
-	snprintf(buf, sizeof(buf), "%d", data->service);
-	return(tac_strdup(buf));
+        snprintf(buf, sizeof(buf), "%d", data->service);
+        return(tac_strdup(buf));
     }
     if (STREQ(sym, "status")) {
-	switch (data->status) {
-	default:
-	    return(tac_strdup("unknown"));
-	case AUTHOR_STATUS_PASS_ADD:
-	case AUTHOR_STATUS_PASS_REPL:
-	    return(tac_strdup("pass"));
-	case AUTHOR_STATUS_FAIL:
-	    return(tac_strdup("fail"));
-	case AUTHOR_STATUS_ERROR:
-	    return(tac_strdup("error"));
-	}
+        switch (data->status) {
+        default:
+            return(tac_strdup("unknown"));
+        case AUTHOR_STATUS_PASS_ADD:
+        case AUTHOR_STATUS_PASS_REPL:
+            return(tac_strdup("pass"));
+        case AUTHOR_STATUS_FAIL:
+            return(tac_strdup("fail"));
+        case AUTHOR_STATUS_ERROR:
+            return(tac_strdup("error"));
+        }
     }
 
     return(tac_strdup("unknown"));
 }
 
-/* is_valid_address performs input santization for the NAC address field
-On IP networks deployed within Meta, this value refers to an IP address,
+/* is_valid_name performs input santization for fields that we think would be
+alphanumeric i.e NAC address field, username
+For NAC Address field, this value could refer to an IP address,
 a domain name, or special names like Local, or InfiNode. The function verifies if
 the address consists of alphanumberic characters and special characters '_', '.'
 This function might need to be updated to support networks with other transports
 */
-static int is_valid_address(const char *address) {
-    size_t len = strlen(address);
+static int is_valid_name(const char *name) {
+    size_t len = strlen(name);
+
+    if (len > 100) {
+        report(LOG_DEBUG, "field %s is longer than allowed length 100", name);
+        return 0;
+    }
 
     // Character set check
     for (size_t i = 0; i < len; i++) {
-        char c = address[i];
+        char c = name[i];
         if (!isalnum(c) && c != '_' && c != '.') {
+            report(LOG_DEBUG, "invalid character=%c", c);
+            return 0;
+        }
+    }
+
+    return 1; // true
+}
+
+/* is_valid_ip performs a very basic input sanitization for ip addresses */
+static int is_valid_ip(const char *address) {
+    size_t len = strlen(address)
+
+    if (len > 100) {
+        report(LOG_DEBUG, "field %s is longer than allowed length 100", address);
+        return 0;
+    }
+    // Character set check
+    for (size_t i = 0; i < len; i++) {
+        char c = address[i];
+        if (!isalnum(c) && c != '.' && c != ":") {
             report(LOG_DEBUG, "invalid character=%c", address[i]);
             return 0;
         }
