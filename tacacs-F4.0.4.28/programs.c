@@ -127,6 +127,7 @@ lookup(char *sym, struct author_data *data)
     return(tac_strdup("unknown"));
 }
 
+
 /* is_valid_name performs input santization for fields that we think would be
 alphanumeric i.e NAC address field, username
 For NAC Address field, this value could refer to an IP address,
@@ -174,41 +175,41 @@ substitute(char *string, struct author_data *data)
     outp = out;
 
     while (*cp) {
-        if (*cp != DOLLARSIGN) {
-            *outp++ = *cp++;
-            continue;
-        }
-        cp++;			/* skip dollar sign */
-        symp = sym;
+	if (*cp != DOLLARSIGN) {
+	    *outp++ = *cp++;
+	    continue;
+	}
+	cp++;			/* skip dollar sign */
+	symp = sym;
 
-        /* does it have curly braces e.g. ${foo} ? */
-        if (*cp == '{') {
-            cp++;		/* skip { */
-            while (*cp && *cp != '}')
-            *symp++ = *cp++;
-            cp++;		/* skip } */
+	/* does it have curly braces e.g. ${foo} ? */
+	if (*cp == '{') {
+	    cp++;		/* skip { */
+	    while (*cp && *cp != '}')
+		*symp++ = *cp++;
+	    cp++;		/* skip } */
 
-        } else {
-            /* copy symbol into sym */
-            while (*cp && isalpha((int) *cp))
-            *symp++ = *cp++;
-        }
+	} else {
+	    /* copy symbol into sym */
+	    while (*cp && isalpha((int) *cp))
+		*symp++ = *cp++;
+	}
 
-        *symp = '\0';
-        /* lookup value */
+	*symp = '\0';
+	/* lookup value */
 
-        if (debug & DEBUG_SUBST_FLAG)
-            report(LOG_DEBUG, "Lookup %s", sym);
+	if (debug & DEBUG_SUBST_FLAG)
+	    report(LOG_DEBUG, "Lookup %s", sym);
 
-        valuep = value = lookup(sym, data);
+	valuep = value = lookup(sym, data);
 
-        if (debug & DEBUG_SUBST_FLAG)
-            report(LOG_DEBUG, "Expands to: %s", value);
+	if (debug & DEBUG_SUBST_FLAG)
+	    report(LOG_DEBUG, "Expands to: %s", value);
 
-        /* copy value into output */
-        while (valuep && *valuep)
-            *outp++ = *valuep++;
-        free(value);
+	/* copy value into output */
+	while (valuep && *valuep)
+	    *outp++ = *valuep++;
+	free(value);
     }
     *outp++ = '\0';
 
