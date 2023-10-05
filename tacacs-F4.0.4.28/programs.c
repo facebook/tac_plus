@@ -31,7 +31,6 @@
 #include <signal.h>
 
 static void close_fds(int, int, int);
-static int is_valid_ip(const char *address);
 static int is_valid_name(const char *name);
 static char *lookup(char *, struct author_data *);
 #if HAVE_PID_T
@@ -83,9 +82,7 @@ lookup(char *sym, struct author_data *data)
     }
 
     if (STREQ(sym, "ip")) {
-        if (is_valid_ip(data->id->NAS_ip)) {
-            return(tac_strdup(data->id->NAS_ip));
-        }
+        return(tac_strdup(data->id->NAS_ip));
     }
 
     if (STREQ(sym, "port")) {
@@ -151,26 +148,6 @@ static int is_valid_name(const char *name) {
         char c = name[i];
         if (!isalnum(c) && c != '_' && c != '.' && c != ':') {
             report(LOG_DEBUG, "invalid character '%c' inside field [%s]", c, name);
-            return 0;
-        }
-    }
-
-    return 1; // true
-}
-
-/* is_valid_ip performs a very basic input sanitization for ip addresses */
-static int is_valid_ip(const char *address) {
-    size_t len = strlen(address);
-
-    if (len > 100) {
-        report(LOG_DEBUG, "field %s is longer than allowed length 100", address);
-        return 0;
-    }
-    // Character set check
-    for (size_t i = 0; i < len; i++) {
-        char c = address[i];
-        if (!isalnum(c) && c != '.' && c != ':') {
-            report(LOG_DEBUG, "invalid character %c found inside field [%s]", c, address);
             return 0;
         }
     }
