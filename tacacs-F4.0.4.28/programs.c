@@ -70,14 +70,14 @@ lookup(char *sym, struct author_data *data)
     static char buf[5];
 
     if (STREQ(sym, "user")) {
-       if (is_valid_name(data->id->username)) {
-          return(tac_strdup(data->id->username));
-       }
+        if (is_valid_name(data->id->username)) {
+           return(tac_strdup(data->id->username));
+        }
     }
     if (STREQ(sym, "name")) {
-       if (is_valid_name(data->id->NAS_name)) {
-          return(tac_strdup(data->id->username));
-       }
+        if (is_valid_name(data->id->NAS_name)) {
+           return(tac_strdup(data->id->username));
+        }
     }
     if (STREQ(sym, "ip")) {
 	return(tac_strdup(data->id->NAS_ip));
@@ -86,9 +86,9 @@ lookup(char *sym, struct author_data *data)
 	return(tac_strdup(data->id->NAS_port));
     }
     if (STREQ(sym, "address")) {
-       if (is_valid_name(data->id->NAC_address)) {
-          return(tac_strdup(data->id->NAC_address));
-       }
+        if (is_valid_name(data->id->NAC_address)) {
+           return(tac_strdup(data->id->NAC_address));
+        }
     }
     if (STREQ(sym, "priv")) {
 	snprintf(buf, sizeof(buf), "%d", data->id->priv_lvl);
