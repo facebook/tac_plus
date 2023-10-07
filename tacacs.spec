@@ -1,3 +1,4 @@
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 %global debug_package %{nil}
 
 # tcp_wrappers do not exist on stock EL8/EL9
