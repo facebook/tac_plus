@@ -63,9 +63,16 @@
    <host_decl>		:=	host = <string> {
 					key = <string>
 					prompt = <string>
-					enable = aceclnt|cleartext|des|
+					enable = cleartext|des|
 						 file <filename/string>|
+#ifdef ACECLNT
+						 aceclnt|
+#endif
+#ifdef HAVE_PAM
+						 PAM |
+#endif
 						 nopassword|skey
+
 				}
 
    <user_decl>		:=	user = <string> {
@@ -1296,6 +1303,11 @@ parse_user(void)
 		    user->enable = tac_strdup(sym_buf);
 		    break;
 #endif
+#ifdef HAVE_PAM
+	    case S_pam:
+			user->enable = tac_strdup(sym_buf);
+			break;
+#endif
 
 		default:
 		    parse_error("expecting 'file', 'cleartext', 'nopassword', "
@@ -1304,6 +1316,9 @@ parse_user(void)
 #endif
 #ifdef ACECLNT
 				"'aceclnt', "
+#endif
+#ifdef HAVE_PAM
+				"'PAM', "
 #endif
 				"or 'des' keyword after 'enable =' on line %d",
 				sym_line);
