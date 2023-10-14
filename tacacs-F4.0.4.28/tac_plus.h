@@ -464,6 +464,7 @@ int	keycode(char *);
 void	parser_init(void);
 
 /* programs.c */
+int call_pre_enable(char *, struct authen_data *, char *, int);
 int call_pre_process(char *, struct author_data *, char ***, int *, char *,
 		     int);
 int call_post_process(char *, struct author_data *, char ***, int *);
