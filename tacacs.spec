@@ -2,22 +2,30 @@
 %global debug_package %{nil}
 
 # tcp_wrappers do not exist on stock EL8/EL9
-%define libwrap 0
-%define systemd 0
 
-%if 0%{?el6}
-%define libwrap 1
-%endif
-%if 0%{?el7}
-%define libwrap 1
-%endif
-%if 0%{?el8}
-%define systemd 1
-%endif
-%if 0%{?el9}
-%define systemd 1
+# allow commandline overrides
+%if 0%{?libwrap:1}
+%else
+  %define libwrap 0
+  %if 0%{?el6}
+  %define libwrap 1
+  %endif
+  %if 0%{?el7}
+  %define libwrap 1
+  %endif
 %endif
 
+
+%if 0%{?systemd:1}
+%else
+  %define systemd 0
+  %if 0%{?el8}
+  %define systemd 1
+  %endif
+  %if 0%{?el9}
+  %define systemd 1
+  %endif
+%endif
 
 Summary: TACACS+ Daemon
 Name: tacacs
