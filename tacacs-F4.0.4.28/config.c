@@ -102,9 +102,10 @@
 #endif
 				opap	= cleartext <string> |
 				global	= cleartext <string> |
-				msg	= <string>
+				msg	= <string> |
 				before authorization = <string> |
-				after authorization = <string>
+				after authorization = <string> |
+				before enable = <string>
 
    <svc>		:=	<svc_auth> | <cmd_auth>
 
@@ -186,6 +187,7 @@ typedef struct user {
     char *enable;		/* user enable pwd */
     int noenablepwd;		/* user requires no enable password */
     char *enableacl;		/* hosts (NASs) to allow/deny enabling */
+    char *before_enable;	/* command to run before enabling */
 # endif
 #endif
     char *global;		/* password to use if none set */
@@ -1124,10 +1126,31 @@ parse_user(void)
 
 	case S_before:
 	    sym_get();
+#ifdef UENABLE
+		switch (sym_code) {
+			case S_authorization:
+				sym_get();
+				if (user->before_author)
+					free(user->before_author);
+				user->before_author = tac_strdup(sym_buf);
+				break;
+			case S_enable:
+				sym_get();
+				if (user->before_enable)
+					free(user->before_enable);
+				user->before_enable = tac_strdup(sym_buf);
+				break;
+			default:
+				parse_error("expecting '%s' or '%s' but found '%s' on line %d",
+				codestring(S_authorization), codestring(S_enable), sym_buf, sym_line);
+				return(1);
+		}
+#else // UENABLE
 	    parse(S_authorization);
 	    if (user->before_author)
 		free(user->before_author);
 	    user->before_author = tac_strdup(sym_buf);
+#endif // UENABLE
 	    sym_get();
 	    continue;
 
@@ -1783,6 +1806,9 @@ get_value(USER *user, int field)
 	break;
     case S_enableacl:
 	v.pval = user->enableacl;
+	break;
+	case S_beforeenable:
+	v.pval = user->before_enable;
 	break;
 # endif
 #endif

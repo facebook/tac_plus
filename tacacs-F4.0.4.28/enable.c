@@ -124,6 +124,9 @@ enable_fn(struct authen_data *data)
     char *passwd;
     struct private_data *p;
     int pwlen;
+#ifdef UENABLE
+    char *cmd;
+#endif
 
     p = (struct private_data *)data->method_data;
 
@@ -180,6 +183,27 @@ enable_fn(struct authen_data *data)
 		data->status = TAC_PLUS_AUTHEN_STATUS_PASS;
 		break;
 	    }
+ 	    cmd = cfg_get_pvalue(data->NAS_id->username, TAC_IS_USER,
+			S_beforeenable, TAC_PLUS_RECURSE);
+  	    if (cmd) {
+ 	    // check CMD
+  	   	int status;
+   		char error_str[255];
+		int error_len = 255;
+		status = call_pre_enable(cmd, data, error_str, error_len);
+		switch (status) {
+			case 0: /* Permit */
+			case 2: /* Use replacement AV pairs from program as final result */
+			break;
+			case 1: /* Deny */
+			case 3: /* deny, but return attributes and server-msg to NAS */
+			default:
+		    report(LOG_INFO, "setting authen_status_fail %d", status);
+		    data->server_msg = tac_strdup("Denied due to enable authentication.");
+		    data->status = TAC_PLUS_AUTHEN_STATUS_FAIL;
+		    return(0);
+		}
+ 	    }
 #endif
 	    /* Request a password */
 	    data->flags = TAC_PLUS_AUTHEN_FLAG_NOECHO;
