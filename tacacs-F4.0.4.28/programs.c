@@ -137,7 +137,7 @@ static int is_valid_name(const char *name) {
     // character set check
     for (size_t i = 0; i < len; i++) {
        char c = name[i];
-       if (!isalnum(c) && c != '_' && c != '.' && c != ':') {
+       if (!isalnum(c) && c != '_' && c != '.' && c != ':' && c != '-') {
           report(LOG_DEBUG, "invalid character '%c' inside field [%s]", c, name);
           return 0;
        }
